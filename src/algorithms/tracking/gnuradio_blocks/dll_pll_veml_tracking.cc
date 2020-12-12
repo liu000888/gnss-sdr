@@ -603,6 +603,33 @@ dll_pll_veml_tracking::dll_pll_veml_tracking(const Dll_Pll_Conf &conf_) : gr::bl
         }
     d_corrected_doppler = false;
     d_acc_carrier_phase_initialized = false;
+
+    // begin 20201204 init udp socket 
+    d_con_dump = d_trk_parameters.dump_constellation_udp;
+    d_con_dump_udp_addr = d_trk_parameters.dump_con_udp_addr;
+    d_con_dump_udp_port = d_trk_parameters.dump_con_udp_base_port;
+    if (d_con_dump)
+        {
+            try 
+                {
+                    /*
+                    boost::asio::ip::udp::socket s(
+                        d_con_udp_io_context, 
+                        boost::asio::ip::udp::endpoint(
+                            boost::asio::ip::udp::v4(), 0));   
+                    boost::asio::ip::udp::resolver resolver(d_con_udp_io_context);
+                    d_con_udp_socket = &s;
+                    d_con_udp_resolver = &resolver;
+                    */
+                   
+                }
+            catch (std::exception &e)
+                {
+                    LOG(WARNING) << "Exception initing udp socket " << e.what();
+                }
+            
+        }
+    // end 20201204     
 }
 
 
@@ -1449,6 +1476,35 @@ void dll_pll_veml_tracking::log_data()
                 {
                     LOG(WARNING) << "Exception writing trk dump file " << e.what();
                 }
+            // begin 20201204 send bb data through udp
+            if (d_con_dump)
+                {
+                    d_con_udp_buf.push_back(prompt_I / 200000.0);
+                    d_con_udp_buf.push_back(prompt_Q / 200000.0);
+                    if (d_con_udp_buf.size() >= 256)
+                        {
+                            try 
+                                {
+                                    ssize_t send_len = sendto(d_con_udp_sock, 
+                                        reinterpret_cast<void *>(&d_con_udp_buf[0]), 
+                                        d_con_udp_buf.size() * sizeof(float), 
+                                        0, 
+                                        reinterpret_cast<struct sockaddr *>(&d_con_udp_me), 
+                                        d_con_udp_socklen);
+                                    if (send_len == 0)
+                                        {
+                                            std::cerr << "Error sending " << strerror(errno) << std::endl;
+                                        }
+                                }
+                            catch (std::exception &e)
+                                {
+                                    LOG(WARNING) << "Exception writing udp port " << e.what();
+                                    std::cerr << "Exception writing udp port " << e.what() << std::endl;
+                                }
+                            d_con_udp_buf.clear();
+                        }
+                }
+            // end 20201204
         }
 }
 
@@ -1680,6 +1736,42 @@ void dll_pll_veml_tracking::set_channel(uint32_t channel)
                             LOG(WARNING) << "channel " << d_channel << " Exception opening trk dump file " << e.what();
                         }
                 }
+
+            // begin 20201204 set udp port
+            if (d_con_dump)
+                {
+                    d_con_dump_udp_port += d_channel;
+                    try 
+                        {
+                            /*d_con_udp_endpoints = d_con_udp_resolver->resolve(
+                                boost::asio::ip::udp::v4(), 
+                                d_con_dump_udp_addr, 
+                                std::to_string(d_con_dump_udp_port)
+                            );*/
+                            d_con_udp_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+                            if (d_con_udp_sock == -1) 
+                                {
+                                    LOG(WARNING) << "Error opening constellation udp port ";
+                                    throw std::exception();
+                                }
+                            d_con_udp_me.sin_family = AF_INET;
+                            d_con_udp_me.sin_addr.s_addr = inet_addr(d_con_dump_udp_addr.c_str());
+                            d_con_udp_me.sin_port = htons(d_con_dump_udp_port);
+                            d_con_udp_socklen = sizeof(d_con_udp_me);
+                            if (connect(d_con_udp_sock, reinterpret_cast<struct sockaddr *>(&d_con_udp_me), d_con_udp_socklen) == -1)
+                                {
+                                    LOG(WARNING) << "Error opening constellation udp port " << strerror(errno);
+                                    std::cerr << "Error opening constellation udp port " << strerror(errno) << std::endl;
+                                    //throw std::exception();
+                                }
+                        }
+                    catch (std::exception &e)
+                        {
+                            LOG(WARNING) << "Exception opening udp port" << e.what();
+                            std::cerr << "Exception opening udp port" << e.what() << std::endl;
+                        }
+                }
+            // end 20201204 
         }
 }
 

@@ -83,6 +83,11 @@ public:
     bool high_dyn;
     bool dump;
     bool dump_mat;
+    // begin 20201204
+    bool dump_constellation_udp;
+    std::string dump_con_udp_addr;
+    uint32_t dump_con_udp_base_port;
+    // end 20201204
 };
 
 

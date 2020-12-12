@@ -29,6 +29,7 @@
 #include <fstream>                               // for ofstream
 #include <memory>                                // for shared_ptr
 #include <string>                                // for string
+#include <netinet/in.h>
 
 /** \addtogroup PVT
  * \{ */
@@ -50,7 +51,7 @@ public:
     /*!
      * \brief Default constructor.
      */
-    Nmea_Printer(const std::string& filename, bool flag_nmea_output_file, bool flag_nmea_tty_port, std::string nmea_dump_devname, const std::string& base_path = ".");
+    Nmea_Printer(const std::string& filename, bool flag_nmea_output_file, bool flag_nmea_tty_port, bool flag_nmea_udp_port, std::string nmea_dump_devname, std::string nmea_dump_udp_addr, std::string nmea_dump_udp_port, const std::string& base_path = ".");
 
     /*!
      * \brief Default destructor.
@@ -81,8 +82,12 @@ private:
     std::string nmea_filename;  // String with the NMEA log filename
     std::string nmea_base_path;
     std::string nmea_devname;
+    std::string nmea_udp_addr;
+    std::string nmea_udp_port;
 
     int nmea_dev_descriptor;  // NMEA serial device descriptor (i.e. COM port)
+    int nmea_udp_sock;
+    struct sockaddr_in si_me;
 
     bool print_avg_pos;
     bool d_flag_nmea_output_file;

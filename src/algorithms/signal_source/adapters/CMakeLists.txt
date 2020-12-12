@@ -17,6 +17,11 @@ if(ENABLE_RAW_UDP AND PCAP_FOUND)
     set(OPT_DRIVER_HEADERS ${OPT_DRIVER_HEADERS} custom_udp_signal_source.h)
 endif()
 
+if(ENABLE_RAW_UDP)
+    set(OPT_DRIVER_SOURCES ${OPT_DRIVER_SOURCES} simple_tcp_signal_source.cc)
+    set(OPT_DRIVER_HEADERS ${OPT_DRIVER_HEADERS} simple_tcp_signal_source.h)
+endif()
+
 
 if(ENABLE_PLUTOSDR)
     ##############################################

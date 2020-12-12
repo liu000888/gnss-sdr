@@ -258,7 +258,7 @@ rtklib_pvt_gs::rtklib_pvt_gs(uint32_t nchannels,
         }
 
     // initialize nmea_printer
-    d_nmea_output_file_enabled = (conf_.nmea_output_file_enabled or conf_.flag_nmea_tty_port);
+    d_nmea_output_file_enabled = (conf_.nmea_output_file_enabled or conf_.flag_nmea_tty_port or conf_.flag_nmea_udp);
     d_nmea_rate_ms = conf_.nmea_rate_ms;
     if (d_nmea_rate_ms == 0)
         {
@@ -267,7 +267,7 @@ rtklib_pvt_gs::rtklib_pvt_gs(uint32_t nchannels,
 
     if (d_nmea_output_file_enabled)
         {
-            d_nmea_printer = std::make_unique<Nmea_Printer>(conf_.nmea_dump_filename, conf_.nmea_output_file_enabled, conf_.flag_nmea_tty_port, conf_.nmea_dump_devname, conf_.nmea_output_file_path);
+            d_nmea_printer = std::make_unique<Nmea_Printer>(conf_.nmea_dump_filename, conf_.nmea_output_file_enabled, conf_.flag_nmea_tty_port, conf_.flag_nmea_udp, conf_.nmea_dump_devname, conf_.nmea_dump_udp_addr, conf_.nmea_dump_udp_port, conf_.nmea_output_file_path);
         }
     else
         {

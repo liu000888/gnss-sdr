@@ -9,9 +9,15 @@
 
 set(OPT_DRIVER_SOURCES "")
 set(OPT_DRIVER_HEADERS "")
+
+if(ENABLE_RAW_UDP)
+    set(OPT_DRIVER_SOURCES ${OPT_DRIVER_SOURCES} gr_complex_simple_tcp_source.cc)
+    set(OPT_DRIVER_HEADERS ${OPT_DRIVER_HEADERS} gr_complex_simple_tcp_source.h)
+endif()
+
 if(ENABLE_RAW_UDP AND PCAP_FOUND)
-    set(OPT_DRIVER_SOURCES gr_complex_ip_packet_source.cc)
-    set(OPT_DRIVER_HEADERS gr_complex_ip_packet_source.h)
+    set(OPT_DRIVER_SOURCES ${OPT_DRIVER_SOURCES} gr_complex_ip_packet_source.cc)
+    set(OPT_DRIVER_HEADERS ${OPT_DRIVER_HEADERS} gr_complex_ip_packet_source.h)
 endif()
 
 

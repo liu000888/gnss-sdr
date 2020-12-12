@@ -40,6 +40,14 @@
 #include <typeinfo>                           // for typeid
 #include <utility>                            // for pair
 
+// begin 20201204
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
+#include <boost/shared_ptr.hpp>
+#include <errno.h>
+// end 20201204
+
 /** \addtogroup Tracking
  * \{ */
 /** \addtogroup Tracking_gnuradio_blocks tracking_gr_blocks
@@ -201,6 +209,26 @@ private:
     bool d_dump_mat;
     bool d_acc_carrier_phase_initialized;
     bool d_enable_extended_integration;
+
+    // begin 20201204 
+    bool d_con_dump;
+    std::string d_con_dump_udp_addr;
+    uint16_t d_con_dump_udp_port;
+
+    int d_con_udp_sock;
+    sockaddr_in d_con_udp_me;
+    socklen_t d_con_udp_socklen;
+
+    std::vector<float> d_con_udp_buf;
+
+    // boost::asio::io_context d_con_udp_io_context;
+    // boost::asio::ip::udp::socket *d_con_udp_socket;
+    // boost::asio::ip::udp::resolver *d_con_udp_resolver;
+    // boost::asio::ip::udp::resolver::results_type d_con_udp_endpoints;
+
+    // boost::asio::io_service d_con_udp_io_services;
+    // boost::asio::ip::udp::endpoint d_con_udp_endpoints;
+    // end 20201204
 };
 
 

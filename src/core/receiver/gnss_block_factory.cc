@@ -117,6 +117,7 @@
 
 #if RAW_UDP
 #include "custom_udp_signal_source.h"
+#include "simple_tcp_signal_source.h"
 #endif
 
 #if ENABLE_FPGA
@@ -659,6 +660,23 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
                     std::cout << "GNSS-SDR program ended.\n";
                     exit(1);
                 }
+        }
+    else if (implementation == "Simple_TCP_Signal_Source")
+        {
+            {
+                try
+                    {
+                        std::unique_ptr<GNSSBlockInterface> block_ = std::make_unique<SimpleTcpSignalSource>(configuration, role, in_streams,
+                            out_streams, queue);
+                        block = std::move(block_);
+                    }
+
+                catch (const std::exception& e)
+                    {
+                        std::cout << "GNSS-SDR program ended.\n";
+                        exit(1);
+                    }
+            }
         }
 #endif
     else if (implementation == "Nsr_File_Signal_Source")

@@ -53,8 +53,14 @@ namespace fs = boost::filesystem;
 namespace errorlib = boost::system;
 #endif
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <sys/socket.h>
+#include <sys/errno.h>
 
-Nmea_Printer::Nmea_Printer(const std::string& filename, bool flag_nmea_output_file, bool flag_nmea_tty_port, std::string nmea_dump_devname, const std::string& base_path)
+
+Nmea_Printer::Nmea_Printer(const std::string& filename, bool flag_nmea_output_file, bool flag_nmea_tty_port, bool flag_nmea_udp_port, std::string nmea_dump_devname, std::string nmea_dump_udp_addr, std::string nmea_dump_udp_port, const std::string& base_path)
 {
     nmea_base_path = base_path;
     d_flag_nmea_output_file = flag_nmea_output_file;
@@ -118,6 +124,26 @@ Nmea_Printer::Nmea_Printer(const std::string& filename, bool flag_nmea_output_fi
         {
             nmea_dev_descriptor = -1;
         }
+
+    nmea_udp_addr = std::move(nmea_dump_udp_addr);
+    nmea_udp_port = std::move(nmea_dump_udp_port);
+    if (flag_nmea_udp_port == true)
+        {
+            nmea_udp_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            if (nmea_udp_sock == -1)
+                {
+                    DLOG(WARNING) << "Error creating udp nmea socket: " << strerror(errno) << std::endl;
+                    std::cout << "Error creating udp nmea socket: " << strerror(errno) << std::endl;
+                }
+            si_me.sin_family = AF_INET;
+            si_me.sin_addr.s_addr = inet_addr(nmea_udp_addr.c_str());
+            si_me.sin_port = htons(atoi(nmea_udp_port.c_str()));
+            if (connect(nmea_udp_sock, (struct sockaddr*)&si_me, sizeof(si_me)) == -1)
+                {
+                    DLOG(WARNING) << "Error connecting udp nmea socket: " << strerror(errno) << std::endl;
+                    std::cout << "Error connecting udp nmea socket: " << strerror(errno) << std::endl;
+                }
+        }
     print_avg_pos = false;
     d_PVT_data = nullptr;
 }
@@ -157,6 +183,10 @@ Nmea_Printer::~Nmea_Printer()
     catch (const std::exception& e)
         {
             std::cerr << e.what() << '\n';
+        }
+    if (nmea_udp_sock != -1)
+        {
+            close(nmea_udp_sock);
         }
 }
 
@@ -267,6 +297,25 @@ bool Nmea_Printer::Print_Nmea_Line(const Rtklib_Solver* const pvt_data, bool pri
                 {
                     DLOG(INFO) << "NMEA printer cannot write on serial device" << nmea_devname.c_str();
                     return false;
+                }
+        }
+
+    // write to udp port
+    if (nmea_udp_sock != -1)
+        {
+            std::string nmea_stream;
+            nmea_stream.clear();
+            nmea_stream.append(GPRMC);
+            nmea_stream.append(GPGGA);
+            nmea_stream.append(GPGSA);
+            nmea_stream.append(GPGSV);
+            char send_buf[1024];
+            strcpy(send_buf, nmea_stream.c_str());
+            int send_bytes = sendto(nmea_udp_sock, send_buf, strlen(send_buf), 0, (const sockaddr*)&si_me, sizeof(si_me));
+            if (send_bytes == 0 || send_bytes == -1)
+                {
+                    std::cout << "Error writing udp port: " << strerror(errno) << std::endl;
+                    DLOG(WARNING) << "Error writing udp port: " << strerror(errno) << std::endl;
                 }
         }
     return true;

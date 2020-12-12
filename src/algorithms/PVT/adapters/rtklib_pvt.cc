@@ -50,6 +50,8 @@ Rtklib_Pvt::Rtklib_Pvt(const ConfigurationInterface* configuration,
     // dump parameters
     const std::string default_dump_filename("./pvt.dat");
     const std::string default_nmea_dump_filename("./nmea_pvt.nmea");
+    const std::string default_nmea_dump_udp_addr("127.0.0.1");
+    const std::string default_nmea_dump_udp_port("46050");
     const std::string default_nmea_dump_devname("/dev/tty1");
     const std::string default_rtcm_dump_devname("/dev/pts/1");
     DLOG(INFO) << "role " << role;
@@ -68,8 +70,11 @@ Rtklib_Pvt::Rtklib_Pvt(const ConfigurationInterface* configuration,
 
     // NMEA Printer settings
     pvt_output_parameters.flag_nmea_tty_port = configuration->property(role + ".flag_nmea_tty_port", false);
+    pvt_output_parameters.flag_nmea_udp = configuration->property(role + ".nmea_dump_udp", false);
     pvt_output_parameters.nmea_dump_filename = configuration->property(role + ".nmea_dump_filename", default_nmea_dump_filename);
     pvt_output_parameters.nmea_dump_devname = configuration->property(role + ".nmea_dump_devname", default_nmea_dump_devname);
+    pvt_output_parameters.nmea_dump_udp_addr = configuration->property(role + ".nmea_dump_udp_addr", default_nmea_dump_udp_addr);
+    pvt_output_parameters.nmea_dump_udp_port = configuration->property(role + ".nmea_dump_udp_port", default_nmea_dump_udp_port);
 
     // RINEX version
     pvt_output_parameters.rinex_version = configuration->property(role + ".rinex_version", 3);

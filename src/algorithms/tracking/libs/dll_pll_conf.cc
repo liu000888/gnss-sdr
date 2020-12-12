@@ -34,6 +34,11 @@ Dll_Pll_Conf::Dll_Pll_Conf()
     dump = false;
     dump_mat = true;
     dump_filename = std::string("./dll_pll_dump.dat");
+    // begin 20201204
+    dump_constellation_udp = false;
+    dump_con_udp_base_port = 4000;
+    dump_con_udp_addr = "127.0.0.1";
+    // end 20201204
     enable_fll_pull_in = false;
     enable_fll_steady_state = false;
     pull_in_time_s = 10;
@@ -92,6 +97,14 @@ void Dll_Pll_Conf::SetFromConfiguration(const ConfigurationInterface *configurat
     dump = configuration->property(role + ".dump", dump);
     dump_filename = configuration->property(role + ".dump_filename", dump_filename);
     dump_mat = configuration->property(role + ".dump_mat", dump_mat);
+    // begin 20201204
+    dump_constellation_udp = configuration->property(role + ".dump_constellation_udp", dump_constellation_udp);
+    if (dump_constellation_udp)
+        {
+            dump_con_udp_addr = configuration->property(role + ".dump_con_udp_addr", dump_con_udp_addr);
+            dump_con_udp_base_port = configuration->property(role + ".dump_con_udp_base_port", dump_con_udp_base_port);
+        }
+    // end 20201204
     pll_bw_hz = configuration->property(role + ".pll_bw_hz", pll_bw_hz);
     if (FLAGS_pll_bw_hz != 0.0)
         {

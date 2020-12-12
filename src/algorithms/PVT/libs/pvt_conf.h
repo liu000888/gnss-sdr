@@ -41,6 +41,8 @@ public:
     std::string dump_filename;
     std::string nmea_dump_filename;
     std::string nmea_dump_devname;
+    std::string nmea_dump_udp_addr;
+    std::string nmea_dump_udp_port;
     std::string rtcm_dump_devname;
     std::string output_path;
     std::string rinex_output_path;
@@ -68,6 +70,7 @@ public:
     uint16_t rtcm_station_id;
 
     bool flag_nmea_tty_port;
+    bool flag_nmea_udp;
     bool flag_rtcm_server;
     bool flag_rtcm_tty_port;
     bool output_enabled;
