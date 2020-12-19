@@ -183,7 +183,7 @@ TEST_F(NmeaPrinterTest, PrintLine)
 
     bool flag_nmea_output_file = true;
     ASSERT_NO_THROW({
-        std::shared_ptr<Nmea_Printer> nmea_printer = std::make_shared<Nmea_Printer>(filename, flag_nmea_output_file, false, "");
+        std::shared_ptr<Nmea_Printer> nmea_printer = std::make_shared<Nmea_Printer>(filename, flag_nmea_output_file, false, false, "", "", "");
         nmea_printer->Print_Nmea_Line(pvt_solution.get(), false);
     }) << "Failure printing NMEA messages.";
 

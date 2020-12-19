@@ -187,17 +187,7 @@ bool Gr_Complex_Simple_Tcp_Source::stop()
 
 bool Gr_Complex_Simple_Tcp_Source::open()
 {
-    // std::array<char, PCAP_ERRBUF_SIZE> errbuf{};
     boost::mutex::scoped_lock lock(d_mutex);  // hold mutex for duration of this function
-    // open device for reading
-    // descr = pcap_open_live(d_src_device.c_str(), 1500, 1, 1000, errbuf.data());
-    // if (descr == nullptr)
-    //     {
-    //         std::cout << "Error opening Ethernet device " << d_src_device << '\n';
-    //         std::cout << "Fatal Error in pcap_open_live(): " << std::string(errbuf.data()) << '\n';
-    //         return false;
-    //     }
-    // bind TCP port to avoid automatic reply with ICMP port unreachable packets from kernel
     d_sock_raw = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (d_sock_raw == -1)
         {
@@ -212,6 +202,13 @@ bool Gr_Complex_Simple_Tcp_Source::open()
     si_me.sin_port = htons(d_tcp_port);
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
     d_si_me_len = sizeof(si_me);
+
+    // set reuseaddr 
+    int sock_opt = 1;
+    if (setsockopt(d_sock_raw, SOL_SOCKET, SO_REUSEADDR, &sock_opt, sizeof(sock_opt)) == -1)
+    {
+        std::cout << "Error setting port reuse\n";
+    }
 
     // bind socket to port
     if (bind(d_sock_raw, reinterpret_cast<struct sockaddr *>(&si_me), d_si_me_len) == -1)
@@ -239,7 +236,6 @@ Gr_Complex_Simple_Tcp_Source::~Gr_Complex_Simple_Tcp_Source()
 
 void Gr_Complex_Simple_Tcp_Source::my_pcap_loop_thread()
 {
-    // pcap_loop(pcap_handle, -1, Gr_Complex_Simple_Tcp_Source::static_pcap_callback, reinterpret_cast<u_char *>(this));
     if (listen(d_sock_raw, 0) == -1)
         {
             std::cout << "Error listening TCP socket: " << strerror(errno);
@@ -294,7 +290,7 @@ void Gr_Complex_Simple_Tcp_Source::demux_samples(const gr_vector_void_star &outp
                         {
                             int8_t real;
                             int8_t imag;
-                            uint8_t tmp_char2;
+                            uint8_t tmp_char2 = 0;
                             // tmp_char2 = fifo_buff[fifo_read_ptr] & 0x0F;
                             if (tmp_char2 >= 8)
                                 {
@@ -323,7 +319,7 @@ void Gr_Complex_Simple_Tcp_Source::demux_samples(const gr_vector_void_star &outp
                                     static_cast<gr_complex *>(output_item)[n] = gr_complex(real, imag);
                                 }
                         }
-                    
+
                     break;
                 case 3:  // interleaved float samples
                     for (auto &output_item : output_items)
@@ -340,14 +336,13 @@ void Gr_Complex_Simple_Tcp_Source::demux_samples(const gr_vector_void_star &outp
                                 {
                                     static_cast<gr_complex *>(output_item)[n] = gr_complex(imag, real);
                                 }
-                            
+
                             // static_cast<std::vector<gr_complex *>>(output_items) =
-                            
                         }
                     break;
                 case 4:  // interleaved short samples
                     // FIXME gr_complex cannot accept short type, convert required
-                    for (void * const &output_item : output_items)
+                    for (void *const &output_item : output_items)
                         {
                             short real;
                             short imag;

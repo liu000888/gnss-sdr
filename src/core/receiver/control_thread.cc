@@ -1111,7 +1111,7 @@ void ControlThread::sysv_queue_listener()
 
     if ((msqid_ = msgget(key, 0644 | IPC_CREAT)) == -1)
         {
-            std::cerr << "GNSS-SDR cannot create SysV message queues\n";
+            std::cerr << "GNSS-SDR cannot create SysV message queues: " + std::string(strerror(errno)) << std::endl;
             read_queue = false;
         }
 
