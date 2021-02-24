@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -72,11 +69,7 @@ public:
     gr::basic_block_sptr get_right_block() override;
 
 private:
-#if GNURADIO_USES_STD_POINTERS
-    std::shared_ptr<gr::block> gen_source_;
-#else
-    boost::shared_ptr<gr::block> gen_source_;
-#endif
+    gnss_shared_ptr<gr::block> gen_source_;
     gr::blocks::vector_to_stream::sptr vector_to_stream_;
     gr::blocks::file_sink::sptr file_sink_;
     std::string role_;

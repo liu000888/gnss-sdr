@@ -1,10 +1,8 @@
-# Copyright (C) 2019 (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2019-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Original code from https://github.com/vector-of-bool/CMakeCM and modified
 # by C. Fernandez. The original code is distributed under the OSI-approved
@@ -122,7 +120,6 @@ if(FILESYSTEM_FIND_QUIETLY)
 endif()
 
 # All of our tests require C++17 or later
-set(CMAKE_CXX_STANDARD 17)
 if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "9.0.0"))
     set(CMAKE_REQUIRED_FLAGS "-std=c++17")
 endif()

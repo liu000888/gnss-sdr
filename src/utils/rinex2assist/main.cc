@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -38,6 +35,12 @@
 #include <cstdlib>
 #include <iostream>
 
+#if GFLAGS_OLD_NAMESPACE
+namespace gflags
+{
+using namespace google;
+}
+#endif
 
 int main(int argc, char** argv)
 {
@@ -49,9 +52,9 @@ int main(int argc, char** argv)
         "Usage: \n" +
         "   rinex2assist <RINEX Nav file input>");
 
-    google::SetUsageMessage(intro_help);
+    gflags::SetUsageMessage(intro_help);
     google::SetVersionString("1.0");
-    google::ParseCommandLineFlags(&argc, &argv, true);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     if ((argc != 2))
         {
@@ -59,7 +62,7 @@ int main(int argc, char** argv)
             std::cerr << "   " << argv[0]
                       << " <RINEX Nav file input>"
                       << '\n';
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             return 1;
         }
     std::string xml_filename;
@@ -297,14 +300,14 @@ int main(int argc, char** argv)
         {
             std::cerr << "Error reading the RINEX file: " << e.what() << '\n';
             std::cerr << "No XML file will be created.\n";
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             return 1;
         }
 
     if (i == 0 and j == 0)
         {
             std::cerr << "No navigation data found in the RINEX file. No XML file will be created.\n";
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             return 1;
         }
 
@@ -325,7 +328,7 @@ int main(int argc, char** argv)
             catch (std::exception& e)
                 {
                     std::cerr << "Problem creating the XML file " << xml_filename << ": " << e.what() << '\n';
-                    google::ShutDownCommandLineFlags();
+                    gflags::ShutDownCommandLineFlags();
                     return 1;
                 }
             std::cout << "Generated file: " << xml_filename << '\n';
@@ -343,7 +346,7 @@ int main(int argc, char** argv)
             catch (std::exception& e)
                 {
                     std::cerr << "Problem creating the XML file " << xml_filename << ": " << e.what() << '\n';
-                    google::ShutDownCommandLineFlags();
+                    gflags::ShutDownCommandLineFlags();
                     return 1;
                 }
             std::cout << "Generated file: " << xml_filename << '\n';
@@ -363,7 +366,7 @@ int main(int argc, char** argv)
             catch (std::exception& e)
                 {
                     std::cerr << "Problem creating the XML file " << xml_filename << ": " << e.what() << '\n';
-                    google::ShutDownCommandLineFlags();
+                    gflags::ShutDownCommandLineFlags();
                     return 1;
                 }
             std::cout << "Generated file: " << xml_filename << '\n';
@@ -383,7 +386,7 @@ int main(int argc, char** argv)
             catch (std::exception& e)
                 {
                     std::cerr << "Problem creating the XML file " << xml_filename << ": " << e.what() << '\n';
-                    google::ShutDownCommandLineFlags();
+                    gflags::ShutDownCommandLineFlags();
                     return 1;
                 }
             std::cout << "Generated file: " << xml_filename << '\n';
@@ -402,7 +405,7 @@ int main(int argc, char** argv)
             catch (std::exception& e)
                 {
                     std::cerr << "Problem creating the XML file " << xml_filename << ": " << e.what() << '\n';
-                    google::ShutDownCommandLineFlags();
+                    gflags::ShutDownCommandLineFlags();
                     return 1;
                 }
             std::cout << "Generated file: " << xml_filename << '\n';
@@ -420,11 +423,11 @@ int main(int argc, char** argv)
             catch (std::exception& e)
                 {
                     std::cerr << "Problem creating the XML file " << xml_filename << ": " << e.what() << '\n';
-                    google::ShutDownCommandLineFlags();
+                    gflags::ShutDownCommandLineFlags();
                     return 1;
                 }
             std::cout << "Generated file: " << xml_filename << '\n';
         }
-    google::ShutDownCommandLineFlags();
+    gflags::ShutDownCommandLineFlags();
     return 0;
 }

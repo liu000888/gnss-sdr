@@ -9,13 +9,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -27,6 +24,12 @@
 #include "configuration_interface.h"
 #include <cstdint>
 #include <string>
+
+/** \addtogroup Tracking
+ * \{ */
+/** \addtogroup Tracking_libs
+ * \{ */
+
 
 class Dll_Pll_Conf_Fpga
 {
@@ -62,8 +65,6 @@ public:
     uint32_t bit_synchronization_time_limit_s;
     uint32_t vector_length;
     uint32_t smoother_length;
-    uint32_t dev_file_num;
-    uint32_t num_prev_assigned_ch;
     uint32_t code_length_chips;
     uint32_t code_samples_per_chip;
     uint32_t extend_fpga_integration_periods;
@@ -98,4 +99,7 @@ public:
     bool dump_mat;
 };
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_DLL_PLL_CONF_FPGA_H

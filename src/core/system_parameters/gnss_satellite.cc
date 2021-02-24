@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -303,7 +300,7 @@ std::string Gnss_Satellite::what_block(const std::string& system_, uint32_t PRN_
                     block_ = std::string("IIF");  // Plane E
                     break;
                 case 4:
-                    block_ = std::string("Unknown");
+                    block_ = std::string("III");  // Plane A
                     break;
                 case 5:
                     block_ = std::string("IIR-M");  // Plane E
@@ -333,7 +330,7 @@ std::string Gnss_Satellite::what_block(const std::string& system_, uint32_t PRN_
                     block_ = std::string("IIR");  // Plane F
                     break;
                 case 14:
-                    block_ = std::string("IIR");  // Plane F
+                    block_ = std::string("Decommissioned");  // Plane F
                     break;
                 case 15:
                     block_ = std::string("IIR-M");  // Plane F
@@ -345,7 +342,7 @@ std::string Gnss_Satellite::what_block(const std::string& system_, uint32_t PRN_
                     block_ = std::string("IIR-M");  // Plane C
                     break;
                 case 18:
-                    block_ = std::string("IIR");  // Plane E
+                    block_ = std::string("III");  // Plane D
                     break;
                 case 19:
                     block_ = std::string("IIR");  // Plane D
@@ -360,7 +357,7 @@ std::string Gnss_Satellite::what_block(const std::string& system_, uint32_t PRN_
                     block_ = std::string("IIR");  // Plane E
                     break;
                 case 23:
-                    block_ = std::string("IIR");  // Plane F
+                    block_ = std::string("III");  // Plane E
                     break;
                 case 24:
                     block_ = std::string("IIF");  // Plane A

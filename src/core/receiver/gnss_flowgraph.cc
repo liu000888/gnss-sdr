@@ -10,13 +10,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -29,6 +26,7 @@
 #include "Galileo_E1.h"
 #include "Galileo_E5a.h"
 #include "Galileo_E5b.h"
+#include "Galileo_E6.h"
 #include "channel.h"
 #include "channel_fsm.h"
 #include "channel_interface.h"
@@ -110,6 +108,14 @@ void GNSSFlowgraph::start()
             return;
         }
 
+#ifdef ENABLE_FPGA
+    // start the DMA if the receiver is in post-processing mode
+    if (configuration_->property(sig_source_.at(0)->role() + ".switch_position", 0) == 0)
+        {
+            sig_source_.at(0)->start();
+        }
+#endif
+
     running_ = true;
 }
 
@@ -121,6 +127,9 @@ void GNSSFlowgraph::stop()
             chan->stop_channel();  // stop the acquisition or tracking operation
         }
     top_block_->stop();
+#ifndef ENABLE_FPGA
+    top_block_->wait();
+#endif
     running_ = false;
 }
 
@@ -398,7 +407,7 @@ void GNSSFlowgraph::connect()
                                     double resampler_ratio = 1.0;
                                     double acq_fs = fs;
                                     // find the signal associated to this channel
-                                    switch (mapStringValues_[channels_.at(i)->implementation()])
+                                    switch (mapStringValues_[channels_.at(i)->get_signal().get_signal_str()])
                                         {
                                         case evGPS_1C:
                                             acq_fs = GPS_L1_CA_OPT_ACQ_FS_SPS;
@@ -421,6 +430,9 @@ void GNSSFlowgraph::connect()
                                         case evGAL_7X:
                                             acq_fs = GALILEO_E5B_OPT_ACQ_FS_SPS;
                                             break;
+                                        case evGAL_E6:
+                                            acq_fs = GALILEO_E6_OPT_ACQ_FS_SPS;
+                                            break;
                                         case evGLO_1G:
                                         case evGLO_2G:
                                         case evBDS_B1:
@@ -434,7 +446,7 @@ void GNSSFlowgraph::connect()
                                     if (acq_fs < fs)
                                         {
                                             // check if the resampler is already created for the channel system/signal and for the specific RF Channel
-                                            const std::string map_key = channels_.at(i)->implementation() + std::to_string(selected_signal_conditioner_ID);
+                                            const std::string map_key = channels_.at(i)->get_signal().get_signal_str() + std::to_string(selected_signal_conditioner_ID);
                                             resampler_ratio = static_cast<double>(fs) / acq_fs;
                                             int decimation = floor(resampler_ratio);
                                             while (fs % decimation > 0)
@@ -449,8 +461,7 @@ void GNSSFlowgraph::connect()
                                                     std::vector<float> taps = gr::filter::firdes::low_pass(1.0,
                                                         fs,
                                                         acq_fs_decimated / 2.1,
-                                                        acq_fs_decimated / 2,
-                                                        gr::filter::firdes::win_type::WIN_HAMMING);
+                                                        acq_fs_decimated / 2);
 
                                                     gr::basic_block_sptr fir_filter_ccf_ = gr::filter::fir_filter_ccf::make(decimation, taps);
 
@@ -461,13 +472,13 @@ void GNSSFlowgraph::connect()
                                                             top_block_->connect(sig_conditioner_.at(selected_signal_conditioner_ID)->get_right_block(), 0,
                                                                 acq_resamplers_.at(map_key), 0);
                                                             LOG(INFO) << "Created "
-                                                                      << channels_.at(i)->implementation()
+                                                                      << channels_.at(i)->get_signal().get_signal_str()
                                                                       << " acquisition resampler for RF channel " << std::to_string(signal_conditioner_ID) << " with " << taps.size() << " taps and decimation factor of " << decimation;
                                                         }
                                                     else
                                                         {
                                                             LOG(INFO) << "Found existing "
-                                                                      << channels_.at(i)->implementation()
+                                                                      << channels_.at(i)->get_signal().get_signal_str()
                                                                       << " acquisition resampler for RF channel " << std::to_string(signal_conditioner_ID) << " with " << taps.size() << " taps and decimation factor of " << decimation;
                                                         }
 
@@ -628,6 +639,12 @@ void GNSSFlowgraph::connect()
                             available_GAL_7X_signals_.remove(signal_value);
                             break;
 
+                        case evGAL_E6:
+                            gnss_system = "Galileo";
+                            signal_value = Gnss_Signal(Gnss_Satellite(gnss_system, sat), gnss_signal);
+                            available_GAL_E6_signals_.remove(signal_value);
+                            break;
+
                         case evGLO_1G:
                             gnss_system = "Glonass";
                             signal_value = Gnss_Signal(Gnss_Satellite(gnss_system, sat), gnss_signal);
@@ -699,6 +716,44 @@ void GNSSFlowgraph::connect()
             catch (const std::exception& e)
                 {
                     LOG(WARNING) << "Can't connect observables to Monitor block";
+                    LOG(ERROR) << e.what();
+                    top_block_->disconnect_all();
+                    return;
+                }
+        }
+
+    // GNSS SYNCHRO ACQUISITION MONITOR
+    if (enable_acquisition_monitor_)
+        {
+            try
+                {
+                    for (int i = 0; i < channels_count_; i++)
+                        {
+                            top_block_->connect(channels_.at(i)->get_right_block_acq(), 0, GnssSynchroAcquisitionMonitor_, i);
+                        }
+                }
+            catch (const std::exception& e)
+                {
+                    LOG(WARNING) << "Can't connect acquisition intermediate outputs to Monitor block";
+                    LOG(ERROR) << e.what();
+                    top_block_->disconnect_all();
+                    return;
+                }
+        }
+
+    // GNSS SYNCHRO TRACKING MONITOR
+    if (enable_tracking_monitor_)
+        {
+            try
+                {
+                    for (int i = 0; i < channels_count_; i++)
+                        {
+                            top_block_->connect(channels_.at(i)->get_right_block_trk(), 0, GnssSynchroTrackingMonitor_, i);
+                        }
+                }
+            catch (const std::exception& e)
+                {
+                    LOG(WARNING) << "Can't connect tracking outputs to Monitor block";
                     LOG(ERROR) << e.what();
                     top_block_->disconnect_all();
                     return;
@@ -946,6 +1001,14 @@ void GNSSFlowgraph::disconnect()
                         {
                             top_block_->disconnect(observables_->get_right_block(), i, GnssSynchroMonitor_, i);
                         }
+                    if (enable_acquisition_monitor_)
+                        {
+                            top_block_->disconnect(channels_.at(i)->get_right_block_acq(), 0, GnssSynchroAcquisitionMonitor_, i);
+                        }
+                    if (enable_tracking_monitor_)
+                        {
+                            top_block_->disconnect(channels_.at(i)->get_right_block_trk(), 0, GnssSynchroTrackingMonitor_, i);
+                        }
                     top_block_->msg_disconnect(channels_.at(i)->get_right_block(), pmt::mp("telemetry"), pvt_->get_left_block(), pmt::mp("telemetry"));
                 }
             top_block_->msg_disconnect(pvt_->get_left_block(), pmt::mp("pvt_to_observables"), observables_->get_right_block(), pmt::mp("pvt_to_observables"));
@@ -1084,6 +1147,11 @@ void GNSSFlowgraph::push_back_signal(const Gnss_Signal& gs)
             available_GAL_7X_signals_.push_back(gs);
             break;
 
+        case evGAL_E6:
+            available_GAL_E6_signals_.remove(gs);
+            available_GAL_E6_signals_.push_back(gs);
+            break;
+
         case evGLO_1G:
             available_GLO_1G_signals_.remove(gs);
             available_GLO_1G_signals_.push_back(gs);
@@ -1139,6 +1207,10 @@ void GNSSFlowgraph::remove_signal(const Gnss_Signal& gs)
             available_GAL_7X_signals_.remove(gs);
             break;
 
+        case evGAL_E6:
+            available_GAL_E6_signals_.remove(gs);
+            break;
+
         case evGLO_1G:
             available_GLO_1G_signals_.remove(gs);
             break;
@@ -1176,6 +1248,9 @@ double GNSSFlowgraph::project_doppler(const std::string& searched_signal, double
             break;
         case evGPS_2S:
             return (primary_freq_doppler_hz / FREQ1) * FREQ2;
+            break;
+        case evGAL_E6:
+            return (primary_freq_doppler_hz / FREQ1) * FREQ6;
             break;
         default:
             return primary_freq_doppler_hz;
@@ -1388,7 +1463,7 @@ void GNSSFlowgraph::priorize_satellites(const std::vector<std::pair<int, Gnss_Sa
 {
     size_t old_size;
     Gnss_Signal gs;
-    for (auto& visible_satellite : visible_satellites)
+    for (const auto& visible_satellite : visible_satellites)
         {
             if (visible_satellite.second.get_system() == "GPS")
                 {
@@ -1440,6 +1515,14 @@ void GNSSFlowgraph::priorize_satellites(const std::vector<std::pair<int, Gnss_Sa
                     if (old_size > available_GAL_7X_signals_.size())
                         {
                             available_GAL_7X_signals_.push_front(gs);
+                        }
+
+                    gs = Gnss_Signal(visible_satellite.second, "E6");
+                    old_size = available_GAL_E6_signals_.size();
+                    available_GAL_E6_signals_.remove(gs);
+                    if (old_size > available_GAL_E6_signals_.size())
+                        {
+                            available_GAL_E6_signals_.push_front(gs);
                         }
                 }
         }
@@ -1570,6 +1653,7 @@ void GNSSFlowgraph::init()
     mapStringValues_["1B"] = evGAL_1B;
     mapStringValues_["5X"] = evGAL_5X;
     mapStringValues_["7X"] = evGAL_7X;
+    mapStringValues_["E6"] = evGAL_E6;
     mapStringValues_["1G"] = evGLO_1G;
     mapStringValues_["2G"] = evGLO_2G;
     mapStringValues_["B1"] = evBDS_B1;
@@ -1584,21 +1668,69 @@ void GNSSFlowgraph::init()
      * Instantiate the receiver monitor block, if required
      */
     enable_monitor_ = configuration_->property("Monitor.enable_monitor", false);
-    bool enable_protobuf = configuration_->property("Monitor.enable_protobuf", true);
-    if (configuration_->property("PVT.enable_protobuf", false) == true)
-        {
-            enable_protobuf = true;
-        }
-    std::string address_string = configuration_->property("Monitor.client_addresses", std::string("127.0.0.1"));
-    std::vector<std::string> udp_addr_vec = split_string(address_string, '_');
-    std::sort(udp_addr_vec.begin(), udp_addr_vec.end());
-    udp_addr_vec.erase(std::unique(udp_addr_vec.begin(), udp_addr_vec.end()), udp_addr_vec.end());
-
     if (enable_monitor_)
         {
+            // Retrieve monitor properties
+            bool enable_protobuf = configuration_->property("Monitor.enable_protobuf", true);
+            if (configuration_->property("PVT.enable_protobuf", false) == true)
+                {
+                    enable_protobuf = true;
+                }
+            std::string address_string = configuration_->property("Monitor.client_addresses", std::string("127.0.0.1"));
+            std::vector<std::string> udp_addr_vec = split_string(address_string, '_');
+            std::sort(udp_addr_vec.begin(), udp_addr_vec.end());
+            udp_addr_vec.erase(std::unique(udp_addr_vec.begin(), udp_addr_vec.end()), udp_addr_vec.end());
+
+            // Instantiate monitor object
             GnssSynchroMonitor_ = gnss_synchro_make_monitor(channels_count_,
                 configuration_->property("Monitor.decimation_factor", 1),
                 configuration_->property("Monitor.udp_port", 1234),
+                udp_addr_vec, enable_protobuf);
+        }
+
+    /*
+     * Instantiate the receiver acquisition monitor block, if required
+     */
+    enable_acquisition_monitor_ = configuration_->property("AcquisitionMonitor.enable_monitor", false);
+    if (enable_acquisition_monitor_)
+        {
+            // Retrieve monitor properties
+            bool enable_protobuf = configuration_->property("AcquisitionMonitor.enable_protobuf", true);
+            if (configuration_->property("PVT.enable_protobuf", false) == true)
+                {
+                    enable_protobuf = true;
+                }
+            std::string address_string = configuration_->property("AcquisitionMonitor.client_addresses", std::string("127.0.0.1"));
+            std::vector<std::string> udp_addr_vec = split_string(address_string, '_');
+            std::sort(udp_addr_vec.begin(), udp_addr_vec.end());
+            udp_addr_vec.erase(std::unique(udp_addr_vec.begin(), udp_addr_vec.end()), udp_addr_vec.end());
+
+            GnssSynchroAcquisitionMonitor_ = gnss_synchro_make_monitor(channels_count_,
+                configuration_->property("AcquisitionMonitor.decimation_factor", 1),
+                configuration_->property("AcquisitionMonitor.udp_port", 1235),
+                udp_addr_vec, enable_protobuf);
+        }
+
+    /*
+     * Instantiate the receiver tracking monitor block, if required
+     */
+    enable_tracking_monitor_ = configuration_->property("TrackingMonitor.enable_monitor", false);
+    if (enable_tracking_monitor_)
+        {
+            // Retrieve monitor properties
+            bool enable_protobuf = configuration_->property("TrackingMonitor.enable_protobuf", true);
+            if (configuration_->property("PVT.enable_protobuf", false) == true)
+                {
+                    enable_protobuf = true;
+                }
+            std::string address_string = configuration_->property("TrackingMonitor.client_addresses", std::string("127.0.0.1"));
+            std::vector<std::string> udp_addr_vec = split_string(address_string, '_');
+            std::sort(udp_addr_vec.begin(), udp_addr_vec.end());
+            udp_addr_vec.erase(std::unique(udp_addr_vec.begin(), udp_addr_vec.end()), udp_addr_vec.end());
+
+            GnssSynchroTrackingMonitor_ = gnss_synchro_make_monitor(channels_count_,
+                configuration_->property("TrackingMonitor.decimation_factor", 1),
+                configuration_->property("TrackingMonitor.udp_port", 1236),
                 udp_addr_vec, enable_protobuf);
         }
 }
@@ -1934,6 +2066,19 @@ void GNSSFlowgraph::set_signals_list()
                 }
         }
 
+    if (configuration_->property("Channels_E6.count", 0) > 0)
+        {
+            // Loop to create the list of Galileo E6 signals
+            for (available_gnss_prn_iter = available_galileo_prn.cbegin();
+                 available_gnss_prn_iter != available_galileo_prn.cend();
+                 available_gnss_prn_iter++)
+                {
+                    available_GAL_E6_signals_.emplace_back(
+                        Gnss_Satellite(std::string("Galileo"), *available_gnss_prn_iter),
+                        std::string("E6"));
+                }
+        }
+
     if (configuration_->property("Channels_1G.count", 0) > 0)
         {
             // Loop to create the list of GLONASS L1 C/A signals
@@ -2036,6 +2181,10 @@ bool GNSSFlowgraph::is_multiband() const
                     multiband = true;
                 }
             if (configuration_->property("Channels_7X.count", 0) > 0)
+                {
+                    multiband = true;
+                }
+            if (configuration_->property("Channels_E6.count", 0) > 0)
                 {
                     multiband = true;
                 }
@@ -2272,6 +2421,50 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
                     if (!pop)
                         {
                             available_GAL_7X_signals_.push_back(result);
+                        }
+                }
+            break;
+
+        case evGAL_E6:
+            if (configuration_->property("Channels_1B.count", 0) > 0)
+                {
+                    // 1. Get the current channel status map
+                    std::map<int, std::shared_ptr<Gnss_Synchro>> current_channels_status = channels_status_->get_current_status_map();
+                    // 2. search the currently tracked Galileo E1 satellites and assist the Galileo E5 acquisition if the satellite is not tracked on E5
+                    for (auto& current_status : current_channels_status)
+                        {
+                            if (std::string(current_status.second->Signal) == "1B")
+                                {
+                                    std::list<Gnss_Signal>::iterator it2;
+                                    it2 = std::find_if(std::begin(available_GAL_E6_signals_), std::end(available_GAL_E6_signals_),
+                                        [&](Gnss_Signal const& sig) { return sig.get_satellite().get_PRN() == current_status.second->PRN; });
+
+                                    if (it2 != available_GAL_E6_signals_.end())
+                                        {
+                                            estimated_doppler = static_cast<float>(current_status.second->Carrier_Doppler_hz);
+                                            RX_time = current_status.second->RX_time;
+                                            // std::cout << " Channel: " << it->first << " => Doppler: " << estimated_doppler << "[Hz] \n";
+                                            // 3. return the Gal E6 satellite and remove it from list
+                                            result = *it2;
+                                            if (pop)
+                                                {
+                                                    available_GAL_E6_signals_.erase(it2);
+                                                }
+                                            found_signal = true;
+                                            assistance_available = true;
+                                            break;
+                                        }
+                                }
+                        }
+                }
+            // fallback: pick the front satellite because there is no tracked satellites in E1 to assist E6
+            if (found_signal == false)
+                {
+                    result = available_GAL_E6_signals_.front();
+                    available_GAL_E6_signals_.pop_front();
+                    if (!pop)
+                        {
+                            available_GAL_E6_signals_.push_back(result);
                         }
                 }
             break;

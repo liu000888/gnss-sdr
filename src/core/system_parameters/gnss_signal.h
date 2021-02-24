@@ -4,15 +4,13 @@
  * \author
  *  Luis Esteve, 2012. luis(at)epsilon-formacion.com
  *  Javier Arribas, 2012. jarribas(at)cttc.es
+ *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -24,6 +22,12 @@
 #include "gnss_satellite.h"
 #include <ostream>
 #include <string>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
+
 
 /*!
  * \brief This class represents a GNSS signal.
@@ -48,4 +52,7 @@ private:
     std::string signal{};
 };
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_GNSS_SIGNAL_H

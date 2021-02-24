@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -42,11 +39,7 @@
 // ######## GNURADIO BLOCK MESSAGE RECEVER #########
 class GlonassL1CaDllPllCAidTrackingTest_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-using GlonassL1CaDllPllCAidTrackingTest_msg_rx_sptr = std::shared_ptr<GlonassL1CaDllPllCAidTrackingTest_msg_rx>;
-#else
-using GlonassL1CaDllPllCAidTrackingTest_msg_rx_sptr = boost::shared_ptr<GlonassL1CaDllPllCAidTrackingTest_msg_rx>;
-#endif
+using GlonassL1CaDllPllCAidTrackingTest_msg_rx_sptr = gnss_shared_ptr<GlonassL1CaDllPllCAidTrackingTest_msg_rx>;
 
 GlonassL1CaDllPllCAidTrackingTest_msg_rx_sptr GlonassL1CaDllPllCAidTrackingTest_msg_rx_make();
 
@@ -54,7 +47,7 @@ class GlonassL1CaDllPllCAidTrackingTest_msg_rx : public gr::block
 {
 private:
     friend GlonassL1CaDllPllCAidTrackingTest_msg_rx_sptr GlonassL1CaDllPllCAidTrackingTest_msg_rx_make();
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     GlonassL1CaDllPllCAidTrackingTest_msg_rx();
 
 public:
@@ -67,16 +60,16 @@ GlonassL1CaDllPllCAidTrackingTest_msg_rx_sptr GlonassL1CaDllPllCAidTrackingTest_
     return GlonassL1CaDllPllCAidTrackingTest_msg_rx_sptr(new GlonassL1CaDllPllCAidTrackingTest_msg_rx());
 }
 
-void GlonassL1CaDllPllCAidTrackingTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
+void GlonassL1CaDllPllCAidTrackingTest_msg_rx::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
             int64_t message = pmt::to_long(std::move(msg));
             rx_message = message;
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
-            LOG(WARNING) << "msg_handler_telemetry Bad any cast!";
+            LOG(WARNING) << "msg_handler_channel_events Bad any_cast: " << e.what();
             rx_message = 0;
         }
 }
@@ -86,12 +79,12 @@ GlonassL1CaDllPllCAidTrackingTest_msg_rx::GlonassL1CaDllPllCAidTrackingTest_msg_
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&GlonassL1CaDllPllCAidTrackingTest_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&GlonassL1CaDllPllCAidTrackingTest_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&GlonassL1CaDllPllCAidTrackingTest_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&GlonassL1CaDllPllCAidTrackingTest_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;

@@ -1,11 +1,8 @@
-# Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 set(SIGNAL_PROCESSING_TESTING_LIB_SOURCES
@@ -49,6 +46,8 @@ target_link_libraries(signal_processing_testing_lib
 )
 
 target_include_directories(signal_processing_testing_lib
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}/src/core/interfaces
     INTERFACE
         ${CMAKE_SOURCE_DIR}/src/tests/common-files
 )
@@ -74,6 +73,13 @@ if(USE_BOOST_BIND_PLACEHOLDERS)
             -DUSE_BOOST_BIND_PLACEHOLDERS=1
     )
 endif()
+
+if(GNURADIO_USES_STD_POINTERS)
+    target_compile_definitions(signal_processing_testing_lib
+        PUBLIC -DGNURADIO_USES_STD_POINTERS=1
+    )
+endif()
+
 
 if(ENABLE_CLANG_TIDY)
     if(CLANG_TIDY_EXE)

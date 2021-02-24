@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -22,23 +19,21 @@
 #ifndef GNSS_SDR_GNSS_SDR_FPGA_SAMPLE_COUNTER_H
 #define GNSS_SDR_GNSS_SDR_FPGA_SAMPLE_COUNTER_H
 
+#include "gnss_block_interface.h"
 #include <gnuradio/block.h>
 #include <gnuradio/types.h>  // for gr_vector_const_void_star
 #include <cstdint>
 #include <string>
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup Core_Receiver_Library
+ * \{ */
+
 
 class gnss_sdr_fpga_sample_counter;
 
-#if GNURADIO_USES_STD_POINTERS
-using gnss_sdr_fpga_sample_counter_sptr = std::shared_ptr<gnss_sdr_fpga_sample_counter>;
-#else
-using gnss_sdr_fpga_sample_counter_sptr = boost::shared_ptr<gnss_sdr_fpga_sample_counter>;
-#endif
+using gnss_sdr_fpga_sample_counter_sptr = gnss_shared_ptr<gnss_sdr_fpga_sample_counter>;
 
 gnss_sdr_fpga_sample_counter_sptr gnss_sdr_make_fpga_sample_counter(double _fs, int32_t _interval_ms);
 
@@ -52,6 +47,8 @@ public:
         gr_vector_void_star &output_items);
 
 private:
+    const std::string device_name = "counter";  // UIO device name
+
     static const uint32_t page_size = 0x10000;             // default page size for the multicorrelator memory map
     static const uint32_t test_reg_sanity_check = 0x55AA;  // value to check the presence of the test register (to detect the hw)
 
@@ -63,10 +60,9 @@ private:
     void open_device(void);
     bool start();
     bool stop();
-    void wait_for_interrupt(void);
+    void wait_for_interrupt(void) const;
 
-    volatile uint32_t *map_base;            // driver memory map
-    std::string device_name = "/dev/uio2";  // HW device name
+    volatile uint32_t *map_base;  // driver memory map
 
     double fs;
     uint64_t sample_counter;
@@ -90,4 +86,7 @@ private:
     bool is_open;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GNSS_SDR_FPGA_SAMPLE_COUNTER_H

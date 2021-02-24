@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -21,6 +18,7 @@
 
 #include "gnss_sdr_fpga_sample_counter.h"
 #include "gnss_synchro.h"
+#include "uio_fpga.h"
 #include <glog/logging.h>
 #include <gnuradio/io_signature.h>
 #include <pmt/pmt.h>        // for from_double
@@ -132,11 +130,20 @@ void gnss_sdr_fpga_sample_counter::configure_samples_per_output(uint32_t interva
 
 void gnss_sdr_fpga_sample_counter::open_device()
 {
-    // open communication with HW accelerator
-    if ((fd = open(device_name.c_str(), O_RDWR | O_SYNC)) == -1)
+    // UIO device file
+    std::string device_io_name;
+    // find the uio device file corresponding to the sample counter module
+    if (find_uio_dev_file_name(device_io_name, device_name, 0) < 0)
         {
-            LOG(WARNING) << "Cannot open deviceio" << device_name;
-            std::cout << "Counter-Intr: cannot open deviceio" << device_name << '\n';
+            std::cout << "Cannot find the FPGA uio device file corresponding to device name " << device_name << std::endl;
+            throw std::exception();
+        }
+
+    // open communication with HW accelerator
+    if ((fd = open(device_io_name.c_str(), O_RDWR | O_SYNC)) == -1)
+        {
+            LOG(WARNING) << "Cannot open deviceio" << device_io_name;
+            std::cout << "Counter-Intr: cannot open deviceio" << device_io_name << '\n';
         }
     map_base = reinterpret_cast<volatile uint32_t *>(mmap(nullptr, page_size,
         PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
@@ -144,7 +151,7 @@ void gnss_sdr_fpga_sample_counter::open_device()
     if (map_base == reinterpret_cast<void *>(-1))
         {
             LOG(WARNING) << "Cannot map the FPGA acquisition module into user memory";
-            std::cout << "Counter-Intr: cannot map deviceio" << device_name << '\n';
+            std::cout << "Counter-Intr: cannot map deviceio" << device_io_name << '\n';
         }
 
     // sanity check : check test register
@@ -264,7 +271,7 @@ int gnss_sdr_fpga_sample_counter::general_work(int noutput_items __attribute__((
 }
 
 
-void gnss_sdr_fpga_sample_counter::wait_for_interrupt()
+void gnss_sdr_fpga_sample_counter::wait_for_interrupt() const
 {
     int32_t irq_count;
     ssize_t nb;

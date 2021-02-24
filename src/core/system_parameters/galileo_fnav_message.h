@@ -11,13 +11,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -38,6 +35,12 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
+
 
 /*!
  * \brief This class handles the Galileo F/NAV Data message, as described in the
@@ -92,11 +95,6 @@ public:
     inline void set_flag_TOW_set(bool flag_tow)
     {
         flag_TOW_set = flag_tow;
-    }
-
-    inline bool is_TOW_set() const
-    {
-        return flag_TOW_set;
     }
 
     inline bool is_TOW1_set() const
@@ -278,4 +276,7 @@ private:
     bool flag_almanac_2{};    // Flag indicating that almanac 2/2 (word 6) have been received
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GALILEO_FNAV_MESSAGE_H

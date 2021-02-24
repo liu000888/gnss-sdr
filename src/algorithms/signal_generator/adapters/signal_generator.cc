@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -26,6 +23,7 @@
 #include "Galileo_E1.h"
 #include "Galileo_E5a.h"
 #include "Galileo_E5b.h"
+#include "Galileo_E6.h"
 #include "configuration_interface.h"
 #include <glog/logging.h>
 #include <cstdint>
@@ -92,6 +90,10 @@ SignalGenerator::SignalGenerator(const ConfigurationInterface* configuration,
             else if (signal1[0].at(0) == '7')
                 {
                     vector_length = static_cast<unsigned int>(round(static_cast<float>(fs_in) / (GALILEO_E5B_CODE_CHIP_RATE_CPS / GALILEO_E5B_CODE_LENGTH_CHIPS)));
+                }
+            else if (signal1[0].at(1) == '6')
+                {
+                    vector_length = static_cast<unsigned int>(round(static_cast<float>(fs_in) / (GALILEO_E6_C_CODE_CHIP_RATE_CPS / GALILEO_E6_C_CODE_LENGTH_CHIPS)) * GALILEO_E6_C_SECONDARY_CODE_LENGTH_CHIPS);
                 }
             else
                 {

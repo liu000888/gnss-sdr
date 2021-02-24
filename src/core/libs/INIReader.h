@@ -32,6 +32,12 @@
 #include <map>
 #include <string>
 
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup Core_Receiver_Library
+ * \{ */
+
+
 /*!
  * \brief Read an INI file into easy-to-access name/value pairs. (Note that I've gone
  * for simplicity here rather than speed, but it should be pretty decent.)
@@ -43,7 +49,7 @@ public:
     explicit INIReader(const std::string& filename);
 
     //! Return the result of ini_parse(), i.e., 0 on success, line number of first error on parse error, or -1 on file open error.
-    int ParseError();
+    int ParseError() const;
 
     //! Get a string value from INI file, returning default_value if not found.
     std::string Get(const std::string& section, const std::string& name,
@@ -61,4 +67,7 @@ private:
     int _error;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_INIREADER_H

@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -25,6 +22,12 @@
 #include <gnuradio/types.h>  // for gr_vector_const_void_star
 #include <cstdint>
 #include <memory>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup Core_Receiver_Library
+ * \{ */
+
 
 class gnss_sdr_time_counter;
 
@@ -56,4 +59,7 @@ private:
     bool flag_days;         // True if the receiver has been running for at least 1 day
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GNSS_SDR_SAMPLE_COUNTER_H

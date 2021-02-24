@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -23,7 +20,7 @@
 #include "GLONASS_L1_L2_CA.h"
 #include "acq_conf.h"
 #include "configuration_interface.h"
-#include "glonass_l2_signal_processing.h"
+#include "glonass_l2_signal_replica.h"
 #include "gnss_sdr_flags.h"
 #include <glog/logging.h>
 #include <algorithm>

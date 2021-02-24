@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -74,8 +71,11 @@ TEST(FFTLengthTest, MeasureExecutionTime)
     EXPECT_NO_THROW(
         for (it = fft_sizes_v.cbegin(); it != fft_sizes_v.cend(); ++it) {
             d_fft_size = *it;
+#if GNURADIO_FFT_USES_TEMPLATES
+            auto d_fft = std::make_unique<gr::fft::fft_complex_fwd>(d_fft_size);
+#else
             auto d_fft = std::make_unique<gr::fft::fft_complex>(d_fft_size, true);
-
+#endif
             std::generate_n(d_fft->get_inbuf(), d_fft_size, gen);
 
             start = std::chrono::system_clock::now();

@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -39,7 +36,11 @@ TEST(FFTSpeedTest, ArmadilloVSGNURadioExecutionTime)
         for (unsigned int fft_size
              : fft_sizes) {
             d_fft_size = fft_size;
+#if GNURADIO_FFT_USES_TEMPLATES
+            auto d_gr_fft = std::make_unique<gr::fft::fft_complex_fwd>(d_fft_size);
+#else
             auto d_gr_fft = std::make_unique<gr::fft::fft_complex>(d_fft_size, true);
+#endif
             arma::arma_rng::set_seed_random();
             arma::cx_fvec d_arma_fft = arma::cx_fvec(d_fft_size).randn() + gr_complex(0.0, 1.0) * arma::cx_fvec(d_fft_size).randn();
             arma::cx_fvec d_arma_fft_result(d_fft_size);

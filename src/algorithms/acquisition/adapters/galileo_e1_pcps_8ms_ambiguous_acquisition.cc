@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -21,7 +18,7 @@
 #include "galileo_e1_pcps_8ms_ambiguous_acquisition.h"
 #include "Galileo_E1.h"
 #include "configuration_interface.h"
-#include "galileo_e1_signal_processing.h"
+#include "galileo_e1_signal_replica.h"
 #include "gnss_sdr_flags.h"
 #include <boost/math/distributions/exponential.hpp>
 #include <glog/logging.h>
@@ -85,12 +82,14 @@ GalileoE1Pcps8msAmbiguousAcquisition::GalileoE1Pcps8msAmbiguousAcquisition(
 
     code_ = std::vector<std::complex<float>>(vector_length_);
 
+    bool enable_monitor_output = configuration->property("AcquisitionMonitor.enable_monitor", false);
+
     if (item_type_ == "gr_complex")
         {
             item_size_ = sizeof(gr_complex);
             acquisition_cc_ = galileo_pcps_8ms_make_acquisition_cc(sampled_ms_, max_dwells_,
                 doppler_max_, fs_in_, samples_per_ms, code_length_,
-                dump_, dump_filename_);
+                dump_, dump_filename_, enable_monitor_output);
             stream_to_vector_ = gr::blocks::stream_to_vector::make(item_size_, vector_length_);
             DLOG(INFO) << "stream_to_vector("
                        << stream_to_vector_->unique_id() << ")";
@@ -236,7 +235,7 @@ void GalileoE1Pcps8msAmbiguousAcquisition::reset()
 }
 
 
-float GalileoE1Pcps8msAmbiguousAcquisition::calculate_threshold(float pfa)
+float GalileoE1Pcps8msAmbiguousAcquisition::calculate_threshold(float pfa) const
 {
     unsigned int frequency_bins = 0;
     for (int doppler = static_cast<int>(-doppler_max_); doppler <= static_cast<int>(doppler_max_); doppler += static_cast<int>(doppler_step_))

@@ -23,13 +23,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -55,18 +52,17 @@
 #include <memory>
 #include <string>
 #include <utility>
-#if GNURADIO_USES_STD_POINTERS
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+
+/** \addtogroup Acquisition
+ * \{ */
+/** \addtogroup Acq_gnuradio_blocks
+ * \{ */
+
 
 class pcps_acquisition_fine_doppler_cc;
 
-#if GNURADIO_USES_STD_POINTERS
-using pcps_acquisition_fine_doppler_cc_sptr = std::shared_ptr<pcps_acquisition_fine_doppler_cc>;
-#else
-using pcps_acquisition_fine_doppler_cc_sptr = boost::shared_ptr<pcps_acquisition_fine_doppler_cc>;
-#endif
+using pcps_acquisition_fine_doppler_cc_sptr = gnss_shared_ptr<pcps_acquisition_fine_doppler_cc>;
 
 pcps_acquisition_fine_doppler_cc_sptr pcps_make_acquisition_fine_doppler_cc(const Acq_Conf& conf_);
 
@@ -201,8 +197,13 @@ private:
     bool start();
 
     std::weak_ptr<ChannelFsm> d_channel_fsm;
+#if GNURADIO_FFT_USES_TEMPLATES
+    std::unique_ptr<gr::fft::fft_complex_fwd> d_fft_if;
+    std::unique_ptr<gr::fft::fft_complex_rev> d_ifft;
+#else
     std::unique_ptr<gr::fft::fft_complex> d_fft_if;
     std::unique_ptr<gr::fft::fft_complex> d_ifft;
+#endif
 
     volk_gnsssdr::vector<volk_gnsssdr::vector<std::complex<float>>> d_grid_doppler_wipeoffs;
     volk_gnsssdr::vector<volk_gnsssdr::vector<float>> d_grid_data;
@@ -246,4 +247,7 @@ private:
     bool d_dump;
 };
 
-#endif /* pcps_acquisition_fine_doppler_cc*/
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_PCPS_ACQUISITION_FINE_DOPPLER_CC_H

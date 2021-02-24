@@ -1,5 +1,5 @@
 /*!
- * \file Galileo_E5b_pcps_acquisition_test.cc
+ * \file galileo_e5b_pcps_acquisition_test.cc
  * \brief  This class implements an acquisition test for
  * GalileoE5bPcpsAcquisition class based on some input parameters.
  * \author Piyush Gupta, 2020. piyush04111999@gmail.com
@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -52,19 +49,10 @@
 #include <gnuradio/analog/sig_source_c.h>
 #endif
 
-#if GNURADIO_USES_STD_POINTERS
-#else
-#include <boost/make_shared.hpp>
-#endif
-
 // ######## GNURADIO BLOCK MESSAGE RECEVER #########
 class GalileoE5bPcpsAcquisitionTest_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-using GalileoE5bPcpsAcquisitionTest_msg_rx_sptr = std::shared_ptr<GalileoE5bPcpsAcquisitionTest_msg_rx>;
-#else
-using GalileoE5bPcpsAcquisitionTest_msg_rx_sptr = boost::shared_ptr<GalileoE5bPcpsAcquisitionTest_msg_rx>;
-#endif
+using GalileoE5bPcpsAcquisitionTest_msg_rx_sptr = gnss_shared_ptr<GalileoE5bPcpsAcquisitionTest_msg_rx>;
 
 GalileoE5bPcpsAcquisitionTest_msg_rx_sptr GalileoE5bPcpsAcquisitionTest_msg_rx_make(Concurrent_Queue<int>& queue);
 
@@ -72,7 +60,7 @@ class GalileoE5bPcpsAcquisitionTest_msg_rx : public gr::block
 {
 private:
     friend GalileoE5bPcpsAcquisitionTest_msg_rx_sptr GalileoE5bPcpsAcquisitionTest_msg_rx_make(Concurrent_Queue<int>& queue);
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     explicit GalileoE5bPcpsAcquisitionTest_msg_rx(Concurrent_Queue<int>& queue);
     Concurrent_Queue<int>& channel_internal_queue;
 
@@ -88,7 +76,7 @@ GalileoE5bPcpsAcquisitionTest_msg_rx_sptr GalileoE5bPcpsAcquisitionTest_msg_rx_m
 }
 
 
-void GalileoE5bPcpsAcquisitionTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
+void GalileoE5bPcpsAcquisitionTest_msg_rx::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
@@ -96,7 +84,7 @@ void GalileoE5bPcpsAcquisitionTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
             rx_message = message;
             channel_internal_queue.push(rx_message);
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
             std::cout << "msg_handler_telemetry Bad any cast!" << std::endl;
             rx_message = 0;
@@ -109,12 +97,12 @@ GalileoE5bPcpsAcquisitionTest_msg_rx::GalileoE5bPcpsAcquisitionTest_msg_rx(Concu
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](pmt::pmt_t&& PH1) { msg_handler_events(PH1); });
+        [this](pmt::pmt_t&& PH1) { msg_handler_channel_events(PH1); });
 #else
-#if BOOST_173_OR_GREATER
-        boost::bind(&GalileoE5bPcpsAcquisitionTest_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+#if USE_BOOST_BIND_PLACEHOLDERS
+        boost::bind(&GalileoE5bPcpsAcquisitionTest_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&GalileoE5bPcpsAcquisitionTest_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&GalileoE5bPcpsAcquisitionTest_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;
@@ -148,11 +136,7 @@ protected:
 
     Concurrent_Queue<int> channel_internal_queue;
     std::shared_ptr<Concurrent_Queue<pmt::pmt_t>> queue;
-#if GNURADIO_USES_STD_POINTERS
-    std::shared_ptr<GalileoE5bPcpsAcquisition> acquisition;
-#else
-    boost::shared_ptr<GalileoE5bPcpsAcquisition> acquisition;
-#endif
+    gnss_shared_ptr<GalileoE5bPcpsAcquisition> acquisition;
     gr::top_block_sptr top_block;
     std::shared_ptr<InMemoryConfiguration> config;
     std::thread ch_thread;
@@ -324,11 +308,7 @@ void GalileoE5bPcpsAcquisitionTest::stop_queue()
 TEST_F(GalileoE5bPcpsAcquisitionTest, Instantiate)
 {
     init();
-#if GNURADIO_USES_STD_POINTERS
-    acquisition = std::make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
-#else
-    acquisition = boost::make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
-#endif
+    acquisition = gnss_make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
 }
 
 
@@ -343,11 +323,7 @@ TEST_F(GalileoE5bPcpsAcquisitionTest, ConnectAndRun)
 
     init();
 
-#if GNURADIO_USES_STD_POINTERS
-    acquisition = std::make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
-#else
-    acquisition = boost::make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
-#endif
+    acquisition = gnss_make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
 
     auto msg_rx = GalileoE5bPcpsAcquisitionTest_msg_rx_make(channel_internal_queue);
 
@@ -377,11 +353,8 @@ TEST_F(GalileoE5bPcpsAcquisitionTest, ValidationOfResults)
 
     init();
 
-#if GNURADIO_USES_STD_POINTERS
-    acquisition = std::make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
-#else
-    acquisition = boost::make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
-#endif
+    acquisition = gnss_make_shared<GalileoE5bPcpsAcquisition>(config.get(), "Acquisition_7X", 1, 0);
+
     std::shared_ptr<FirFilter> input_filter = std::make_shared<FirFilter>(config.get(), "InputFilter", 1, 1);
     auto msg_rx = GalileoE5bPcpsAcquisitionTest_msg_rx_make(channel_internal_queue);
     queue = std::make_shared<Concurrent_Queue<pmt::pmt_t>>();

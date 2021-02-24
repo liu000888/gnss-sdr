@@ -1,11 +1,8 @@
-# Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 set(ACQ_ADAPTER_SOURCES
@@ -24,6 +21,7 @@ set(ACQ_ADAPTER_SOURCES
     galileo_e5a_noncoherent_iq_acquisition_caf.cc
     galileo_e5a_pcps_acquisition.cc
     galileo_e5b_pcps_acquisition.cc
+    galileo_e6_pcps_acquisition.cc
     glonass_l1_ca_pcps_acquisition.cc
     glonass_l2_ca_pcps_acquisition.cc
     beidou_b1i_pcps_acquisition.cc
@@ -46,6 +44,7 @@ set(ACQ_ADAPTER_HEADERS
     galileo_e5a_noncoherent_iq_acquisition_caf.h
     galileo_e5a_pcps_acquisition.h
     galileo_e5b_pcps_acquisition.h
+    galileo_e6_pcps_acquisition.h
     glonass_l1_ca_pcps_acquisition.h
     glonass_l2_ca_pcps_acquisition.h
     beidou_b1i_pcps_acquisition.h
@@ -123,6 +122,7 @@ if(ENABLE_FPGA)
     target_link_libraries(acquisition_adapters
         PRIVATE
             algorithms_libs
+            core_libs
             Gnuradio::fft
             Volk::volk
             Volkgnsssdr::volkgnsssdr

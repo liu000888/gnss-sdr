@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -37,6 +34,7 @@
 #include <gnuradio/top_block.h>
 #include <gtest/gtest.h>
 #include <chrono>
+#include <memory>
 #include <utility>
 
 #if HAS_GENERIC_LAMBDA
@@ -63,22 +61,11 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 #endif
 
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
-#endif
-
 
 // ######## GNURADIO BLOCK MESSAGE RECEVER #########
 class GpsL1CaPcpsAcquisitionTest_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-using GpsL1CaPcpsAcquisitionTest_msg_rx_sptr = std::shared_ptr<GpsL1CaPcpsAcquisitionTest_msg_rx>;
-#else
-using GpsL1CaPcpsAcquisitionTest_msg_rx_sptr = boost::shared_ptr<GpsL1CaPcpsAcquisitionTest_msg_rx>;
-#endif
+using GpsL1CaPcpsAcquisitionTest_msg_rx_sptr = gnss_shared_ptr<GpsL1CaPcpsAcquisitionTest_msg_rx>;
 
 GpsL1CaPcpsAcquisitionTest_msg_rx_sptr GpsL1CaPcpsAcquisitionTest_msg_rx_make();
 
@@ -86,7 +73,7 @@ class GpsL1CaPcpsAcquisitionTest_msg_rx : public gr::block
 {
 private:
     friend GpsL1CaPcpsAcquisitionTest_msg_rx_sptr GpsL1CaPcpsAcquisitionTest_msg_rx_make();
-    void msg_handler_events(const pmt::pmt_t &msg);
+    void msg_handler_channel_events(const pmt::pmt_t &msg);
     GpsL1CaPcpsAcquisitionTest_msg_rx();
 
 public:
@@ -101,16 +88,16 @@ GpsL1CaPcpsAcquisitionTest_msg_rx_sptr GpsL1CaPcpsAcquisitionTest_msg_rx_make()
 }
 
 
-void GpsL1CaPcpsAcquisitionTest_msg_rx::msg_handler_events(const pmt::pmt_t &msg)
+void GpsL1CaPcpsAcquisitionTest_msg_rx::msg_handler_channel_events(const pmt::pmt_t &msg)
 {
     try
         {
             int64_t message = pmt::to_long(msg);
             rx_message = message;
         }
-    catch (boost::bad_any_cast &e)
+    catch (const boost::bad_any_cast &e)
         {
-            LOG(WARNING) << "msg_handler_telemetry Bad any cast!";
+            LOG(WARNING) << "msg_handler_channel_events Bad any_cast: " << e.what();
             rx_message = 0;
         }
 }
@@ -121,12 +108,12 @@ GpsL1CaPcpsAcquisitionTest_msg_rx::GpsL1CaPcpsAcquisitionTest_msg_rx() : gr::blo
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto &&PH1) { msg_handler_events(PH1); });
+        [this](auto &&PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&GpsL1CaPcpsAcquisitionTest_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&GpsL1CaPcpsAcquisitionTest_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&GpsL1CaPcpsAcquisitionTest_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&GpsL1CaPcpsAcquisitionTest_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;
@@ -153,7 +140,7 @@ protected:
     ~GpsL1CaPcpsAcquisitionTest() override = default;
 
     void init();
-    void plot_grid();
+    void plot_grid() const;
 
     gr::top_block_sptr top_block;
     std::shared_ptr<InMemoryConfiguration> config;
@@ -193,7 +180,7 @@ void GpsL1CaPcpsAcquisitionTest::init()
 }
 
 
-void GpsL1CaPcpsAcquisitionTest::plot_grid()
+void GpsL1CaPcpsAcquisitionTest::plot_grid() const
 {
     // load the measured values
     std::string basename = "./tmp-acq-gps1/acquisition_G_1C";
@@ -276,23 +263,13 @@ TEST_F(GpsL1CaPcpsAcquisitionTest /*unused*/, ConnectAndRun /*unused*/)
 
     top_block = gr::make_top_block("Acquisition test");
     init();
-#if GNURADIO_USES_STD_POINTERS
-    std::shared_ptr<GpsL1CaPcpsAcquisition> acquisition = std::make_shared<GpsL1CaPcpsAcquisition>(config.get(), "Acquisition_1C", 1, 0);
-    std::shared_ptr<GpsL1CaPcpsAcquisitionTest_msg_rx> msg_rx = GpsL1CaPcpsAcquisitionTest_msg_rx_make();
-#else
-    boost::shared_ptr<GpsL1CaPcpsAcquisition> acquisition = boost::make_shared<GpsL1CaPcpsAcquisition>(config.get(), "Acquisition_1C", 1, 0);
-    boost::shared_ptr<GpsL1CaPcpsAcquisitionTest_msg_rx> msg_rx = GpsL1CaPcpsAcquisitionTest_msg_rx_make();
-#endif
+    gnss_shared_ptr<GpsL1CaPcpsAcquisition> acquisition = gnss_make_shared<GpsL1CaPcpsAcquisition>(config.get(), "Acquisition_1C", 1, 0);
+    gnss_shared_ptr<GpsL1CaPcpsAcquisitionTest_msg_rx> msg_rx = GpsL1CaPcpsAcquisitionTest_msg_rx_make();
 
     ASSERT_NO_THROW({
         acquisition->connect(top_block);
-#if GNURADIO_USES_STD_POINTERS
         auto source = gr::analog::sig_source_c::make(fs_in, gr::analog::GR_SIN_WAVE, 1000, 1, gr_complex(0));
         auto valve = gnss_sdr_make_valve(sizeof(gr_complex), nsamples, queue.get());
-#else
-        boost::shared_ptr<gr::analog::sig_source_c> source = gr::analog::sig_source_c::make(fs_in, gr::analog::GR_SIN_WAVE, 1000, 1, gr_complex(0));
-        boost::shared_ptr<gr::block> valve = gnss_sdr_make_valve(sizeof(gr_complex), nsamples, queue.get());
-#endif
         top_block->connect(source, 0, valve, 0);
         top_block->connect(valve, 0, acquisition->get_left_block(), 0);
         top_block->msg_connect(acquisition->get_right_block(), pmt::mp("events"), msg_rx, pmt::mp("events"));
@@ -331,13 +308,9 @@ TEST_F(GpsL1CaPcpsAcquisitionTest /*unused*/, ValidationOfResults /*unused*/)
             fs::create_directory(data_str);
         }
 
-#if GNURADIO_USES_STD_POINTERS
-    std::shared_ptr<GpsL1CaPcpsAcquisition> acquisition = std::make_shared<GpsL1CaPcpsAcquisition>(config.get(), "Acquisition_1C", 1, 0);
-    std::shared_ptr<GpsL1CaPcpsAcquisitionTest_msg_rx> msg_rx = GpsL1CaPcpsAcquisitionTest_msg_rx_make();
-#else
-    boost::shared_ptr<GpsL1CaPcpsAcquisition> acquisition = boost::make_shared<GpsL1CaPcpsAcquisition>(config.get(), "Acquisition_1C", 1, 0);
-    boost::shared_ptr<GpsL1CaPcpsAcquisitionTest_msg_rx> msg_rx = GpsL1CaPcpsAcquisitionTest_msg_rx_make();
-#endif
+    auto acquisition = gnss_make_shared<GpsL1CaPcpsAcquisition>(config.get(), "Acquisition_1C", 1, 0);
+    auto msg_rx = GpsL1CaPcpsAcquisitionTest_msg_rx_make();
+
     ASSERT_NO_THROW({
         acquisition->set_channel(1);
     }) << "Failure setting channel.";

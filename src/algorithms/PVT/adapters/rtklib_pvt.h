@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -31,6 +28,13 @@
 #include <ctime>                     // for time_t
 #include <map>                       // for map
 #include <string>                    // for string
+
+/** \addtogroup PVT
+ * Computation of Position, Velocity and Time from GNSS observables.
+ * \{ */
+/** \addtogroup PVT_adapters pvt_adapters
+ * Wrap GNU Radio PVT solvers with a PvtInterface
+ * \{ */
 
 class ConfigurationInterface;
 class Galileo_Almanac;
@@ -99,4 +103,6 @@ private:
     unsigned int out_streams_;
 };
 
-#endif
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_RTKLIB_PVT_H

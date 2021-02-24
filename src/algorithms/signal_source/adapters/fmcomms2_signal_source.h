@@ -8,13 +8,10 @@
  * This class represent a fmcomms2 signal source. It use the gr_iio block
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -33,12 +30,14 @@
 #include "concurrent_queue.h"
 #include <pmt/pmt.h>
 #include <cstdint>
-#include <memory>
 #include <string>
-#if GNURADIO_USES_STD_POINTERS
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+
+/** \addtogroup Signal_Source
+ * \{ */
+/** \addtogroup Signal_Source_adapters
+ * \{ */
+
 
 class ConfigurationInterface;
 
@@ -76,12 +75,7 @@ public:
 
 private:
     gr::iio::fmcomms2_source_f32c::sptr fmcomms2_source_f32c_;
-
-#if GNURADIO_USES_STD_POINTERS
-    std::shared_ptr<gr::block> valve_;
-#else
-    boost::shared_ptr<gr::block> valve_;
-#endif
+    gnss_shared_ptr<gr::block> valve_;
     gr::blocks::file_sink::sptr file_sink_;
 
     std::string role_;
@@ -132,4 +126,7 @@ private:
     bool dump_;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_FMCOMMS2_SIGNAL_SOURCE_H

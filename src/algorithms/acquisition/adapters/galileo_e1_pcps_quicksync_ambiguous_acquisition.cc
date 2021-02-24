@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -21,7 +18,7 @@
 #include "galileo_e1_pcps_quicksync_ambiguous_acquisition.h"
 #include "Galileo_E1.h"
 #include "configuration_interface.h"
-#include "galileo_e1_signal_processing.h"
+#include "galileo_e1_signal_replica.h"
 #include "gnss_sdr_flags.h"
 #include <boost/math/distributions/exponential.hpp>
 #include <glog/logging.h>
@@ -111,6 +108,8 @@ GalileoE1PcpsQuickSyncAmbiguousAcquisition::GalileoE1PcpsQuickSyncAmbiguousAcqui
     dump_filename_ = configuration_->property(role + ".dump_filename",
         default_dump_filename);
 
+    bool enable_monitor_output = configuration_->property("AcquisitionMonitor.enable_monitor", false);
+
     code_ = std::vector<std::complex<float>>(code_length_);
     LOG(INFO) << "Vector Length: " << vector_length_
               << ", Samples per ms: " << samples_per_ms
@@ -123,7 +122,7 @@ GalileoE1PcpsQuickSyncAmbiguousAcquisition::GalileoE1PcpsQuickSyncAmbiguousAcqui
             acquisition_cc_ = pcps_quicksync_make_acquisition_cc(folding_factor_,
                 sampled_ms_, max_dwells_, doppler_max_, fs_in_,
                 samples_per_ms, code_length_, bit_transition_flag_,
-                dump_, dump_filename_);
+                dump_, dump_filename_, enable_monitor_output);
             stream_to_vector_ = gr::blocks::stream_to_vector::make(item_size_,
                 vector_length_);
             DLOG(INFO) << "stream_to_vector_quicksync("
@@ -280,7 +279,7 @@ void GalileoE1PcpsQuickSyncAmbiguousAcquisition::set_state(int state)
 }
 
 
-float GalileoE1PcpsQuickSyncAmbiguousAcquisition::calculate_threshold(float pfa)
+float GalileoE1PcpsQuickSyncAmbiguousAcquisition::calculate_threshold(float pfa) const
 {
     unsigned int frequency_bins = 0;
     for (int doppler = static_cast<int>(-doppler_max_); doppler <= static_cast<int>(doppler_max_); doppler += static_cast<int>(doppler_step_))

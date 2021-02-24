@@ -1,11 +1,8 @@
-# Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 set(SYSTEM_PARAMETERS_SOURCES
@@ -16,11 +13,12 @@ set(SYSTEM_PARAMETERS_SOURCES
     galileo_utc_model.cc
     galileo_ephemeris.cc
     galileo_almanac_helper.cc
+    galileo_cnav_message.cc
+    galileo_fnav_message.cc
     galileo_inav_message.cc
     beidou_dnav_navigation_message.cc
     beidou_dnav_ephemeris.cc
     sbas_ephemeris.cc
-    galileo_fnav_message.cc
     gps_cnav_ephemeris.cc
     gps_cnav_navigation_message.cc
     glonass_gnav_ephemeris.cc
@@ -43,12 +41,15 @@ set(SYSTEM_PARAMETERS_HEADERS
     galileo_ephemeris.h
     galileo_almanac.h
     galileo_almanac_helper.h
+    Galileo_CNAV.h
     Galileo_FNAV.h
     Galileo_INAV.h
     galileo_iono.h
+    galileo_cnav_message.h
+    galileo_fnav_message.h
+    galileo_has_data.h
     galileo_inav_message.h
     sbas_ephemeris.h
-    galileo_fnav_message.h
     gps_cnav_ephemeris.h
     gps_cnav_navigation_message.h
     gps_cnav_iono.h
@@ -66,6 +67,7 @@ set(SYSTEM_PARAMETERS_HEADERS
     Galileo_E1.h
     Galileo_E5a.h
     Galileo_E5b.h
+    Galileo_E6.h
     GLONASS_L1_L2_CA.h
     gnss_frequencies.h
     gnss_obs_codes.h

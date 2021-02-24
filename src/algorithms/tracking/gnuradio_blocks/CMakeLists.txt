@@ -1,11 +1,9 @@
-# Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
+
 
 set(OPT_TRACKING_BLOCKS_SOURCES "")
 set(OPT_TRACKING_BLOCKS_HEADERS "")
@@ -103,14 +101,27 @@ if(GNURADIO_USES_STD_POINTERS)
     )
 endif()
 
-if(ENABLE_CUDA AND NOT CMAKE_VERSION VERSION_GREATER 3.11)
-    target_link_libraries(tracking_gr_blocks
-        PUBLIC
-            ${CUDA_LIBRARIES}
-    )
-    target_include_directories(tracking_gr_blocks
-        PUBLIC
-            ${CUDA_INCLUDE_DIRS}
+target_include_directories(tracking_gr_blocks
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}/src/core/interfaces
+)
+
+if(ENABLE_CUDA)
+    if(CMAKE_VERSION VERSION_GREATER 3.11)
+        target_include_directories(tracking_gr_blocks
+            PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+        )
+    else()
+        target_link_libraries(tracking_gr_blocks
+            PUBLIC cuda_correlator_lib
+        )
+        target_include_directories(tracking_gr_blocks
+            PUBLIC ${CUDA_INCLUDE_DIRS}
+        )
+    endif()
+    set_target_properties(tracking_gr_blocks PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        POSITION_INDEPENDENT_CODE ON
     )
 endif()
 

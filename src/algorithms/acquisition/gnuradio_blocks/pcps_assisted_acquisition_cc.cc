@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -40,20 +37,20 @@ extern Concurrent_Map<Gps_Acq_Assist> global_gps_acq_assist_map;
 pcps_assisted_acquisition_cc_sptr pcps_make_assisted_acquisition_cc(
     int32_t max_dwells, uint32_t sampled_ms, int32_t doppler_max, int32_t doppler_min,
     int64_t fs_in, int32_t samples_per_ms, bool dump,
-    const std::string &dump_filename)
+    const std::string &dump_filename, bool enable_monitor_output)
 {
     return pcps_assisted_acquisition_cc_sptr(
         new pcps_assisted_acquisition_cc(max_dwells, sampled_ms, doppler_max, doppler_min,
-            fs_in, samples_per_ms, dump, dump_filename));
+            fs_in, samples_per_ms, dump, dump_filename, enable_monitor_output));
 }
 
 
 pcps_assisted_acquisition_cc::pcps_assisted_acquisition_cc(
     int32_t max_dwells, uint32_t sampled_ms, int32_t doppler_max, int32_t doppler_min,
-    int64_t fs_in, int32_t samples_per_ms, bool dump,
-    const std::string &dump_filename) : gr::block("pcps_assisted_acquisition_cc",
-                                            gr::io_signature::make(1, 1, sizeof(gr_complex)),
-                                            gr::io_signature::make(0, 0, sizeof(gr_complex)))
+    int64_t fs_in, int32_t samples_per_ms, bool dump, const std::string &dump_filename,
+    bool enable_monitor_output) : gr::block("pcps_assisted_acquisition_cc",
+                                      gr::io_signature::make(1, 1, sizeof(gr_complex)),
+                                      gr::io_signature::make(0, 1, sizeof(Gnss_Synchro)))
 {
     this->message_port_register_out(pmt::mp("events"));
     d_sample_counter = 0ULL;  // SAMPLE COUNTER
@@ -72,15 +69,23 @@ pcps_assisted_acquisition_cc::pcps_assisted_acquisition_cc(
     d_disable_assist = false;
     d_fft_codes.reserve(d_fft_size);
 
+#if GNURADIO_FFT_USES_TEMPLATES
+    // Direct FFT
+    d_fft_if = std::make_unique<gr::fft::fft_complex_fwd>(d_fft_size);
+    // Inverse FFT
+    d_ifft = std::make_unique<gr::fft::fft_complex_rev>(d_fft_size);
+#else
     // Direct FFT
     d_fft_if = std::make_unique<gr::fft::fft_complex>(d_fft_size, true);
-
     // Inverse FFT
     d_ifft = std::make_unique<gr::fft::fft_complex>(d_fft_size, false);
+#endif
 
     // For dumping samples into a file
     d_dump = dump;
     d_dump_filename = dump_filename;
+
+    d_enable_monitor_output = enable_monitor_output;
 
     d_doppler_resolution = 0;
     d_threshold = 0;
@@ -278,7 +283,7 @@ float pcps_assisted_acquisition_cc::search_maximum()
 }
 
 
-float pcps_assisted_acquisition_cc::estimate_input_power(gr_vector_const_void_star &input_items)
+float pcps_assisted_acquisition_cc::estimate_input_power(gr_vector_const_void_star &input_items) const
 {
     const auto *in = reinterpret_cast<const gr_complex *>(input_items[0]);  // Get the input samples pointer
     // 1- Compute the input signal power estimation
@@ -334,7 +339,7 @@ int32_t pcps_assisted_acquisition_cc::compute_and_accumulate_grid(gr_vector_cons
 
 int pcps_assisted_acquisition_cc::general_work(int noutput_items,
     gr_vector_int &ninput_items, gr_vector_const_void_star &input_items,
-    gr_vector_void_star &output_items __attribute__((unused)))
+    gr_vector_void_star &output_items)
 {
     /*!
      * TODO:     High sensitivity acquisition algorithm:
@@ -428,6 +433,15 @@ int pcps_assisted_acquisition_cc::general_work(int noutput_items,
             d_sample_counter += static_cast<uint64_t>(ninput_items[0]);  // sample counter
             consume_each(ninput_items[0]);
             d_state = 0;
+            // Copy and push current Gnss_Synchro to monitor queue
+            if (d_enable_monitor_output)
+                {
+                    auto **out = reinterpret_cast<Gnss_Synchro **>(&output_items[0]);
+                    Gnss_Synchro current_synchro_data = Gnss_Synchro();
+                    current_synchro_data = *d_gnss_synchro;
+                    *out[0] = current_synchro_data;
+                    noutput_items = 1;  // Number of Gnss_Synchro objects produced
+                }
             break;
         case 6:  // Negative_Acq
             DLOG(INFO) << "negative acquisition";

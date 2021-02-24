@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -81,22 +78,12 @@
 #else
 #include <gnuradio/filter/fir_filter_ccf.h>
 #endif
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/shared_ptr.hpp>
-#endif
 
 
 // ######## GNURADIO BLOCK MESSAGE RECEVER FOR TRACKING MESSAGES #########
 class HybridObservablesTest_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-using HybridObservablesTest_msg_rx_sptr = std::shared_ptr<HybridObservablesTest_msg_rx>;
-#else
-using HybridObservablesTest_msg_rx_sptr = boost::shared_ptr<HybridObservablesTest_msg_rx>;
-#endif
-
+using HybridObservablesTest_msg_rx_sptr = gnss_shared_ptr<HybridObservablesTest_msg_rx>;
 
 HybridObservablesTest_msg_rx_sptr HybridObservablesTest_msg_rx_make();
 
@@ -105,7 +92,7 @@ class HybridObservablesTest_msg_rx : public gr::block
 {
 private:
     friend HybridObservablesTest_msg_rx_sptr HybridObservablesTest_msg_rx_make();
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     HybridObservablesTest_msg_rx();
 
 public:
@@ -120,16 +107,16 @@ HybridObservablesTest_msg_rx_sptr HybridObservablesTest_msg_rx_make()
 }
 
 
-void HybridObservablesTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
+void HybridObservablesTest_msg_rx::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
             int64_t message = pmt::to_long(std::move(msg));
             rx_message = message;
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
-            LOG(WARNING) << "msg_handler_telemetry Bad any cast!";
+            LOG(WARNING) << "msg_handler_channel_events Bad any_cast: " << e.what();
             rx_message = 0;
         }
 }
@@ -140,12 +127,12 @@ HybridObservablesTest_msg_rx::HybridObservablesTest_msg_rx() : gr::block("Hybrid
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&HybridObservablesTest_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&HybridObservablesTest_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&HybridObservablesTest_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&HybridObservablesTest_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;
@@ -171,7 +158,7 @@ class HybridObservablesTest_tlm_msg_rx : public gr::block
 {
 private:
     friend HybridObservablesTest_tlm_msg_rx_sptr HybridObservablesTest_tlm_msg_rx_make();
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     HybridObservablesTest_tlm_msg_rx();
 
 public:
@@ -186,16 +173,16 @@ HybridObservablesTest_tlm_msg_rx_sptr HybridObservablesTest_tlm_msg_rx_make()
 }
 
 
-void HybridObservablesTest_tlm_msg_rx::msg_handler_events(pmt::pmt_t msg)
+void HybridObservablesTest_tlm_msg_rx::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
             int64_t message = pmt::to_long(std::move(msg));
             rx_message = message;
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
-            LOG(WARNING) << "msg_handler_telemetry Bad any cast!";
+            LOG(WARNING) << "msg_handler_channel_events Bad any_cast: " << e.what();
             rx_message = 0;
         }
 }
@@ -206,12 +193,12 @@ HybridObservablesTest_tlm_msg_rx::HybridObservablesTest_tlm_msg_rx() : gr::block
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&HybridObservablesTest_tlm_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&HybridObservablesTest_tlm_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&HybridObservablesTest_tlm_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&HybridObservablesTest_tlm_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;
@@ -554,8 +541,7 @@ bool HybridObservablesTest::acquire_signal()
                             taps = gr::filter::firdes::low_pass(1.0,
                                 baseband_sampling_freq,
                                 acq_fs / 2.1,
-                                acq_fs / 10,
-                                gr::filter::firdes::win_type::WIN_HAMMING);
+                                acq_fs / 10);
                             std::cout << "Enabled decimation low pass filter with " << taps.size() << " taps and decimation factor of " << decimation << '\n';
                             acquisition->set_resampler_latency((taps.size() - 1) / 2);
                             gr::basic_block_sptr fir_filter_ccf_ = gr::filter::fir_filter_ccf::make(decimation, taps);
@@ -580,11 +566,8 @@ bool HybridObservablesTest::acquire_signal()
             // top_block_acq->connect(head_samples, 0, acquisition->get_left_block(), 0);
         }
 
-#if GNURADIO_USES_STD_POINTERS
-    std::shared_ptr<Acquisition_msg_rx> msg_rx;
-#else
-    boost::shared_ptr<Acquisition_msg_rx> msg_rx;
-#endif
+    gnss_shared_ptr<Acquisition_msg_rx> msg_rx;
+
     try
         {
             msg_rx = Acquisition_msg_rx_make();
@@ -1590,13 +1573,25 @@ bool HybridObservablesTest::ReadRinexObs(std::vector<arma::mat>* obs_vec, Gnss_S
                             switch (gnss.System)
                                 {
                                 case 'G':
+#if OLD_GPSTK
                                     prn = gpstk::SatID(myprn, gpstk::SatID::systemGPS);
+#else
+                                    prn = gpstk::SatID(myprn, gpstk::SatelliteSystem::GPS);
+#endif
                                     break;
                                 case 'E':
+#if OLD_GPSTK
                                     prn = gpstk::SatID(myprn, gpstk::SatID::systemGalileo);
+#else
+                                    prn = gpstk::SatID(myprn, gpstk::SatelliteSystem::Galileo);
+#endif
                                     break;
                                 default:
+#if OLD_GPSTK
                                     prn = gpstk::SatID(myprn, gpstk::SatID::systemGPS);
+#else
+                                    prn = gpstk::SatID(myprn, gpstk::SatelliteSystem::GPS);
+#endif
                                 }
 
                             gpstk::CommonTime time = r_ref_data.time;
@@ -1754,7 +1749,7 @@ TEST_F(HybridObservablesTest, ValidationOfResults)
                 {
                     // based on true observables metadata (for custom sdr generator)
                     // open true observables log file written by the simulator or based on provided RINEX obs
-                    std::vector<std::shared_ptr<Tracking_True_Obs_Reader>> true_reader_vec;
+                    std::vector<std::shared_ptr<Tracking_True_Obs_Reader> > true_reader_vec;
                     // read true data from the generator logs
                     true_reader_vec.push_back(std::make_shared<Tracking_True_Obs_Reader>());
                     std::cout << "Loading true observable data for PRN " << n.PRN << '\n';
@@ -1795,8 +1790,8 @@ TEST_F(HybridObservablesTest, ValidationOfResults)
                 }
         }
 
-    std::vector<std::shared_ptr<TrackingInterface>> tracking_ch_vec;
-    std::vector<std::shared_ptr<TelemetryDecoderInterface>> tlm_ch_vec;
+    std::vector<std::shared_ptr<TrackingInterface> > tracking_ch_vec;
+    std::vector<std::shared_ptr<TelemetryDecoderInterface> > tlm_ch_vec;
 
     std::vector<gr::blocks::null_sink::sptr> null_sink_vec;
     for (unsigned int n = 0; n < gnss_synchro_vec.size(); n++)

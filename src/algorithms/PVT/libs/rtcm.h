@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -47,6 +44,12 @@
 #include <thread>
 #include <utility>
 #include <vector>
+
+/** \addtogroup PVT
+ * \{ */
+/** \addtogroup PVT_libs
+ * \{ */
+
 
 #if USE_BOOST_ASIO_IO_CONTEXT
 using b_io_context = boost::asio::io_context;
@@ -185,7 +188,7 @@ public:
     /*!
      * \brief Verifies and reads messages of type 1019 (GPS Ephemeris). Returns 1 if anything goes wrong, 0 otherwise.
      */
-    int32_t read_MT1019(const std::string& message, Gps_Ephemeris& gps_eph);
+    int32_t read_MT1019(const std::string& message, Gps_Ephemeris& gps_eph) const;
 
     /*!
     * \brief Prints message type 1020 (GLONASS Ephemeris).
@@ -204,7 +207,7 @@ public:
      * \param glonass_gnav_utc_model GLONASS GNAV Clock Information
      * \return Returns 1 if anything goes wrong, 0 otherwise.
      */
-    int32_t read_MT1020(const std::string& message, Glonass_Gnav_Ephemeris& glonass_gnav_eph, Glonass_Gnav_Utc_Model& glonass_gnav_utc_model);
+    int32_t read_MT1020(const std::string& message, Glonass_Gnav_Ephemeris& glonass_gnav_eph, Glonass_Gnav_Utc_Model& glonass_gnav_utc_model) const;
 
     /*!
      * \brief Prints message type 1029 (Unicode Text String)
@@ -219,7 +222,7 @@ public:
     /*!
      * \brief Verifies and reads messages of type 1045 (Galileo Ephemeris). Returns 1 if anything goes wrong, 0 otherwise.
      */
-    int32_t read_MT1045(const std::string& message, Galileo_Ephemeris& gal_eph);
+    int32_t read_MT1045(const std::string& message, Galileo_Ephemeris& gal_eph) const;
 
     /*!
      * \brief Prints messages of type MSM1 (Compact GNSS observables)
@@ -1466,4 +1469,7 @@ private:
     int32_t set_DF420(const Gnss_Synchro& gnss_synchro);
 };
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_RTCM_H

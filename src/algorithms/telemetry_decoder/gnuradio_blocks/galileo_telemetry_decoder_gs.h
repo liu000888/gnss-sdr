@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -23,36 +20,34 @@
 #ifndef GNSS_SDR_GALILEO_TELEMETRY_DECODER_GS_H
 #define GNSS_SDR_GALILEO_TELEMETRY_DECODER_GS_H
 
-
+#include "galileo_cnav_message.h"
 #include "galileo_fnav_message.h"
 #include "galileo_inav_message.h"
+#include "gnss_block_interface.h"
 #include "gnss_satellite.h"
+#include "tlm_conf.h"
 #include <boost/circular_buffer.hpp>
 #include <gnuradio/block.h>  // for block
 #include <gnuradio/types.h>  // for gr_vector_const_void_star
-#include <array>
 #include <cstdint>
 #include <fstream>
 #include <string>
 #include <vector>
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>  // for std::shared_ptr
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+/** \addtogroup Telemetry_Decoder
+ * \{ */
+/** \addtogroup Telemetry_Decoder_gnuradio_blocks
+ * \{ */
+
 
 class galileo_telemetry_decoder_gs;
 
-#if GNURADIO_USES_STD_POINTERS
-using galileo_telemetry_decoder_gs_sptr = std::shared_ptr<galileo_telemetry_decoder_gs>;
-#else
-using galileo_telemetry_decoder_gs_sptr = boost::shared_ptr<galileo_telemetry_decoder_gs>;
-#endif
+using galileo_telemetry_decoder_gs_sptr = gnss_shared_ptr<galileo_telemetry_decoder_gs>;
 
 galileo_telemetry_decoder_gs_sptr galileo_make_telemetry_decoder_gs(
     const Gnss_Satellite &satellite,
-    int frame_type,
-    bool dump);
+    const Tlm_Conf &conf,
+    int frame_type);
 
 /*!
  * \brief This class implements a block that decodes the INAV and FNAV data defined in Galileo ICD
@@ -76,10 +71,10 @@ public:
 private:
     friend galileo_telemetry_decoder_gs_sptr galileo_make_telemetry_decoder_gs(
         const Gnss_Satellite &satellite,
-        int frame_type,
-        bool dump);
+        const Tlm_Conf &conf,
+        int frame_type);
 
-    galileo_telemetry_decoder_gs(const Gnss_Satellite &satellite, int frame_type, bool dump);
+    galileo_telemetry_decoder_gs(const Gnss_Satellite &satellite, const Tlm_Conf &conf, int frame_type);
 
     const int32_t d_nn = 2;  // Coding rate 1/n
     const int32_t d_KK = 7;  // Constraint Length
@@ -88,6 +83,7 @@ private:
     void deinterleaver(int32_t rows, int32_t cols, const float *in, float *out);
     void decode_INAV_word(float *page_part_symbols, int32_t frame_length);
     void decode_FNAV_word(float *page_symbols, int32_t frame_length);
+    void decode_CNAV_word(float *page_symbols, int32_t page_length);
 
     // vars for Viterbi decoder
     std::vector<int32_t> d_preamble_samples;
@@ -105,6 +101,7 @@ private:
     Gnss_Satellite d_satellite;
 
     // navigation message vars
+    Galileo_Cnav_Message d_cnav_nav;
     Galileo_Inav_Message d_inav_nav;
     Galileo_Fnav_Message d_fnav_nav;
 
@@ -140,6 +137,11 @@ private:
     bool d_flag_parity;
     bool d_flag_preamble;
     bool d_dump;
+    bool d_dump_mat;
+    bool d_remove_dat;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GALILEO_TELEMETRY_DECODER_GS_H

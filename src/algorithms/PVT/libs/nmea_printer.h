@@ -10,13 +10,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -29,6 +26,12 @@
 #include <fstream>                               // for ofstream
 #include <memory>                                // for shared_ptr
 #include <string>                                // for string
+
+/** \addtogroup PVT
+ * \{ */
+/** \addtogroup PVT_libs
+ * \{ */
+
 
 class Rtklib_Solver;
 
@@ -58,7 +61,7 @@ public:
 
 private:
     int init_serial(const std::string& serial_device);  // serial port control
-    void close_serial();
+    void close_serial() const;
     std::string get_GPGGA() const;  // fix data
     std::string get_GPGSV() const;  // satellite data
     std::string get_GPGSA() const;  // overall satellite reception data
@@ -82,4 +85,7 @@ private:
     bool d_flag_nmea_output_file;
 };
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_NMEA_PRINTER_H

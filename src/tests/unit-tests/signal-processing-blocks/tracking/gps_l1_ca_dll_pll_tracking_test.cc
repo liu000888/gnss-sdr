@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -21,6 +18,7 @@
 
 #include "GPS_L1_CA.h"
 #include "gnss_block_factory.h"
+#include "gnss_block_interface.h"
 #include "gnuplot_i.h"
 #include "in_memory_configuration.h"
 #include "signal_generator_flags.h"
@@ -67,20 +65,11 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 #endif
 
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/shared_ptr.hpp>
-#endif
 
 // ######## GNURADIO BLOCK MESSAGE RECEVER #########
 class GpsL1CADllPllTrackingTest_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-using GpsL1CADllPllTrackingTest_msg_rx_sptr = std::shared_ptr<GpsL1CADllPllTrackingTest_msg_rx>;
-#else
-using GpsL1CADllPllTrackingTest_msg_rx_sptr = boost::shared_ptr<GpsL1CADllPllTrackingTest_msg_rx>;
-#endif
+using GpsL1CADllPllTrackingTest_msg_rx_sptr = gnss_shared_ptr<GpsL1CADllPllTrackingTest_msg_rx>;
 
 GpsL1CADllPllTrackingTest_msg_rx_sptr GpsL1CADllPllTrackingTest_msg_rx_make();
 
@@ -88,7 +77,7 @@ class GpsL1CADllPllTrackingTest_msg_rx : public gr::block
 {
 private:
     friend GpsL1CADllPllTrackingTest_msg_rx_sptr GpsL1CADllPllTrackingTest_msg_rx_make();
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     GpsL1CADllPllTrackingTest_msg_rx();
 
 public:
@@ -103,7 +92,7 @@ GpsL1CADllPllTrackingTest_msg_rx_sptr GpsL1CADllPllTrackingTest_msg_rx_make()
 }
 
 
-void GpsL1CADllPllTrackingTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
+void GpsL1CADllPllTrackingTest_msg_rx::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
@@ -111,9 +100,9 @@ void GpsL1CADllPllTrackingTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
             rx_message = message;  // 3 -> loss of lock
             // std::cout << "Received trk message: " << rx_message << '\n';
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
-            LOG(WARNING) << "msg_handler_telemetry Bad any cast!";
+            LOG(WARNING) << "msg_handler_channel_events Bad any_cast: " << e.what();
             rx_message = 0;
         }
 }
@@ -124,12 +113,12 @@ GpsL1CADllPllTrackingTest_msg_rx::GpsL1CADllPllTrackingTest_msg_rx() : gr::block
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&GpsL1CADllPllTrackingTest_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&GpsL1CADllPllTrackingTest_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&GpsL1CADllPllTrackingTest_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&GpsL1CADllPllTrackingTest_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;

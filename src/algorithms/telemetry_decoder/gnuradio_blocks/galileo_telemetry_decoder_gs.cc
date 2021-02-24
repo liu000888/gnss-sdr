@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -22,8 +19,9 @@
 
 #include "galileo_telemetry_decoder_gs.h"
 #include "Galileo_E1.h"   // for GALILEO_E1_CODE_PERIOD_MS
-#include "Galileo_E5a.h"  // for GALILEO_E5A_CODE_PERIO...
+#include "Galileo_E5a.h"  // for GALILEO_E5A_CODE_PERIOD_MS
 #include "Galileo_E5b.h"  // for GALILEO_E5B_CODE_PERIOD_MS
+#include "Galileo_E6.h"   // for GALILEO_E6_CODE_PERIOD_MS
 #include "convolutional.h"
 #include "display.h"
 #include "galileo_almanac_helper.h"  // for Galileo_Almanac_Helper
@@ -31,31 +29,34 @@
 #include "galileo_iono.h"            // for Galileo_Iono
 #include "galileo_utc_model.h"       // for Galileo_Utc_Model
 #include "gnss_synchro.h"
+#include "tlm_utils.h"
 #include <glog/logging.h>
 #include <gnuradio/io_signature.h>
 #include <pmt/pmt.h>        // for make_any
 #include <pmt/pmt_sugar.h>  // for mp
-#include <cmath>            // for fmod
-#include <cstdlib>          // for abs
-#include <exception>        // for exception
-#include <iostream>         // for cout
-#include <memory>           // for make_shared
-
+#include <array>
+#include <cmath>      // for fmod
+#include <cstddef>    // for size_t
+#include <cstdlib>    // for abs
+#include <exception>  // for exception
+#include <iostream>   // for cout
+#include <memory>     // for make_shared
 
 #define CRC_ERROR_LIMIT 6
 
 
 galileo_telemetry_decoder_gs_sptr
-galileo_make_telemetry_decoder_gs(const Gnss_Satellite &satellite, int frame_type, bool dump)
+galileo_make_telemetry_decoder_gs(const Gnss_Satellite &satellite, const Tlm_Conf &conf, int frame_type)
 {
-    return galileo_telemetry_decoder_gs_sptr(new galileo_telemetry_decoder_gs(satellite, frame_type, dump));
+    return galileo_telemetry_decoder_gs_sptr(new galileo_telemetry_decoder_gs(satellite, conf, frame_type));
 }
 
 
 galileo_telemetry_decoder_gs::galileo_telemetry_decoder_gs(
-    const Gnss_Satellite &satellite, int frame_type,
-    bool dump) : gr::block("galileo_telemetry_decoder_gs", gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
-                     gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
+    const Gnss_Satellite &satellite,
+    const Tlm_Conf &conf,
+    int frame_type) : gr::block("galileo_telemetry_decoder_gs", gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
+                          gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -68,7 +69,10 @@ galileo_telemetry_decoder_gs::galileo_telemetry_decoder_gs(
     d_band = '1';
 
     // initialize internal vars
-    d_dump = dump;
+    d_dump_filename = conf.dump_filename;
+    d_dump = conf.dump;
+    d_dump_mat = conf.dump_mat;
+    d_remove_dat = conf.remove_dat;
     d_satellite = Gnss_Satellite(satellite.get_system(), satellite.get_PRN());
     d_frame_type = frame_type;
     DLOG(INFO) << "Initializing GALILEO UNIFIED TELEMETRY DECODER";
@@ -77,16 +81,16 @@ galileo_telemetry_decoder_gs::galileo_telemetry_decoder_gs(
         {
         case 1:  // INAV
             {
-                d_PRN_code_period_ms = static_cast<uint32_t>(GALILEO_E1_CODE_PERIOD_MS);  // for Galileo E5b is also 4 ms
+                d_PRN_code_period_ms = GALILEO_E1_CODE_PERIOD_MS;  // for Galileo E5b is also 4 ms
                 d_bits_per_preamble = GALILEO_INAV_PREAMBLE_LENGTH_BITS;
                 // set the preamble
                 d_samples_per_preamble = GALILEO_INAV_PREAMBLE_LENGTH_BITS;
                 d_preamble_period_symbols = GALILEO_INAV_PREAMBLE_PERIOD_SYMBOLS;
-                d_required_symbols = static_cast<uint32_t>(GALILEO_INAV_PAGE_SYMBOLS) + d_samples_per_preamble;
+                d_required_symbols = GALILEO_INAV_PAGE_SYMBOLS + d_samples_per_preamble;
                 // preamble bits to sampled symbols
                 d_preamble_samples.reserve(d_samples_per_preamble);
                 d_frame_length_symbols = GALILEO_INAV_PAGE_PART_SYMBOLS - GALILEO_INAV_PREAMBLE_LENGTH_BITS;
-                d_codelength = GALILEO_INAV_PAGE_PART_SYMBOLS - GALILEO_INAV_PREAMBLE_LENGTH_BITS;
+                d_codelength = static_cast<int32_t>(d_frame_length_symbols);
                 d_datalength = (d_codelength / d_nn) - d_mm;
                 d_max_symbols_without_valid_frame = GALILEO_INAV_PAGE_SYMBOLS * 30;  // rise alarm 60 seconds without valid tlm
 
@@ -103,9 +107,23 @@ galileo_telemetry_decoder_gs::galileo_telemetry_decoder_gs(
                 // preamble bits to sampled symbols
                 d_preamble_samples.reserve(d_samples_per_preamble);
                 d_frame_length_symbols = GALILEO_FNAV_SYMBOLS_PER_PAGE - GALILEO_FNAV_PREAMBLE_LENGTH_BITS;
-                d_codelength = GALILEO_FNAV_SYMBOLS_PER_PAGE - GALILEO_FNAV_PREAMBLE_LENGTH_BITS;
+                d_codelength = static_cast<int32_t>(d_frame_length_symbols);
                 d_datalength = (d_codelength / d_nn) - d_mm;
                 d_max_symbols_without_valid_frame = GALILEO_FNAV_SYMBOLS_PER_PAGE * 5;  // rise alarm 100 seconds without valid tlm
+                break;
+            }
+        case 3:  // CNAV
+            {
+                d_PRN_code_period_ms = GALILEO_E6_CODE_PERIOD_MS;
+                d_bits_per_preamble = GALILEO_CNAV_PREAMBLE_LENGTH_BITS;
+                d_samples_per_preamble = GALILEO_CNAV_PREAMBLE_LENGTH_BITS;
+                d_preamble_period_symbols = GALILEO_CNAV_SYMBOLS_PER_PAGE;
+                d_required_symbols = static_cast<uint32_t>(GALILEO_CNAV_SYMBOLS_PER_PAGE) + d_samples_per_preamble;
+                d_preamble_samples.reserve(d_samples_per_preamble);
+                d_frame_length_symbols = GALILEO_CNAV_SYMBOLS_PER_PAGE - GALILEO_CNAV_PREAMBLE_LENGTH_BITS;
+                d_codelength = static_cast<int32_t>(d_frame_length_symbols);
+                d_datalength = (d_codelength / d_nn) - d_mm;
+                d_max_symbols_without_valid_frame = GALILEO_CNAV_SYMBOLS_PER_PAGE * 60;
                 break;
             }
         default:
@@ -141,6 +159,18 @@ galileo_telemetry_decoder_gs::galileo_telemetry_decoder_gs(
                 case 2:  // FNAV for E5a-I
                     {
                         if (GALILEO_FNAV_PREAMBLE[i] == '1')
+                            {
+                                d_preamble_samples[i] = 1;
+                            }
+                        else
+                            {
+                                d_preamble_samples[i] = -1;
+                            }
+                        break;
+                    }
+                case 3:  // CNAV for E6
+                    {
+                        if (GALILEO_CNAV_PREAMBLE[i] == '1')
                             {
                                 d_preamble_samples[i] = 1;
                             }
@@ -186,8 +216,10 @@ galileo_telemetry_decoder_gs::galileo_telemetry_decoder_gs(
 galileo_telemetry_decoder_gs::~galileo_telemetry_decoder_gs()
 {
     DLOG(INFO) << "Galileo Telemetry decoder block (channel " << d_channel << ") destructor called.";
+    size_t pos = 0;
     if (d_dump_file.is_open() == true)
         {
+            pos = d_dump_file.tellp();
             try
                 {
                     d_dump_file.close();
@@ -195,6 +227,24 @@ galileo_telemetry_decoder_gs::~galileo_telemetry_decoder_gs()
             catch (const std::exception &ex)
                 {
                     LOG(WARNING) << "Exception in destructor closing the dump file " << ex.what();
+                }
+            if (pos == 0)
+                {
+                    if (!tlm_remove_file(d_dump_filename))
+                        {
+                            LOG(WARNING) << "Error deleting temporary file";
+                        }
+                }
+        }
+    if (d_dump && (pos != 0) && d_dump_mat)
+        {
+            save_tlm_matfile(d_dump_filename);
+            if (d_remove_dat)
+                {
+                    if (!tlm_remove_file(d_dump_filename))
+                        {
+                            LOG(WARNING) << "Error deleting temporary file";
+                        }
                 }
         }
 }
@@ -235,14 +285,14 @@ void galileo_telemetry_decoder_gs::decode_INAV_word(float *page_part_symbols, in
                     page_part_symbols_deint[i] = -page_part_symbols_deint[i];
                 }
         }
-
-    std::vector<int32_t> page_part_bits(frame_length / 2);
+    const int32_t decoded_length = frame_length / 2;
+    std::vector<int32_t> page_part_bits(decoded_length);
     viterbi_decoder(page_part_symbols_deint.data(), page_part_bits.data());
 
     // 3. Call the Galileo page decoder
     std::string page_String;
-    page_String.reserve(frame_length / 2);
-    for (int32_t i = 0; i < (frame_length / 2); i++)
+    page_String.reserve(decoded_length);
+    for (int32_t i = 0; i < decoded_length; i++)
         {
             if (page_part_bits[i] > 0)
                 {
@@ -370,13 +420,15 @@ void galileo_telemetry_decoder_gs::decode_FNAV_word(float *page_symbols, int32_t
                     page_symbols_deint[i] = -page_symbols_deint[i];
                 }
         }
-    std::vector<int32_t> page_bits(frame_length / 2);
+
+    const int32_t decoded_length = frame_length / 2;
+    std::vector<int32_t> page_bits(decoded_length);
     viterbi_decoder(page_symbols_deint.data(), page_bits.data());
 
     // 3. Call the Galileo page decoder
     std::string page_String;
-    page_String.reserve(frame_length);
-    for (int32_t i = 0; i < frame_length; i++)
+    page_String.reserve(decoded_length);
+    for (int32_t i = 0; i < decoded_length; i++)
         {
             if (page_bits[i] > 0)
                 {
@@ -421,6 +473,59 @@ void galileo_telemetry_decoder_gs::decode_FNAV_word(float *page_symbols, int32_t
 }
 
 
+void galileo_telemetry_decoder_gs::decode_CNAV_word(float *page_symbols, int32_t page_length)
+{
+    // 1. De-interleave
+    std::vector<float> page_symbols_deint(page_length);
+    deinterleaver(GALILEO_CNAV_INTERLEAVER_ROWS, GALILEO_CNAV_INTERLEAVER_COLS, page_symbols, page_symbols_deint.data());
+
+    // 2. Viterbi decoder
+    // 2.1 Take into account the NOT gate in G2 polynomial (Galileo ICD Figure 13, FEC encoder)
+    // 2.2 Take into account the possible inversion of the polarity due to PLL lock at 180 degrees
+    for (int32_t i = 0; i < page_length; i++)
+        {
+            if ((i + 1) % 2 == 0)
+                {
+                    page_symbols_deint[i] = -page_symbols_deint[i];
+                }
+        }
+    const int32_t decoded_length = page_length / 2;
+    std::vector<int32_t> page_bits(decoded_length);
+    viterbi_decoder(page_symbols_deint.data(), page_bits.data());
+
+    // 3. Call the Galileo page decoder
+    std::string page_String;
+    page_String.reserve(decoded_length);
+    for (int32_t i = 0; i < decoded_length; i++)
+        {
+            if (page_bits[i] > 0)
+                {
+                    page_String.push_back('1');
+                }
+            else
+                {
+                    page_String.push_back('0');
+                }
+        }
+    d_cnav_nav.read_HAS_page(page_String);
+
+    // 4. If we have a new full message, read it
+    if (d_cnav_nav.have_new_HAS_message() == true)
+        {
+            // TODO: Retrieve data from message and send it somewhere
+            // Galileo_HAS_data has_data = d_cnav_nav.get_HAS_data();
+            if (d_cnav_nav.is_HAS_message_dummy())
+                {
+                    std::cout << TEXT_MAGENTA << "New Galileo E6 HAS message received in channel " << d_channel << " from satellite " << d_satellite << TEXT_RESET << '\n';
+                }
+            else
+                {
+                    std::cout << TEXT_MAGENTA << "New Galileo E6 HAS dummy message received in channel " << d_channel << " from satellite " << d_satellite << TEXT_RESET << '\n';
+                }
+        }
+}
+
+
 void galileo_telemetry_decoder_gs::set_satellite(const Gnss_Satellite &satellite)
 {
     gr::thread::scoped_lock lock(d_setlock);
@@ -453,7 +558,6 @@ void galileo_telemetry_decoder_gs::set_channel(int32_t channel)
                 {
                     try
                         {
-                            d_dump_filename = "telemetry";
                             d_dump_filename.append(std::to_string(d_channel));
                             d_dump_filename.append(".dat");
                             d_dump_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -493,8 +597,14 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                 d_symbol_history.push_back(current_symbol.Prompt_Q);
                 break;
             }
+        case 3:  // CNAV
+            {
+                d_symbol_history.push_back(current_symbol.Prompt_I);
+                break;
+            }
         default:
             {
+                LOG(WARNING) << "Frame type " << d_frame_type << " is not defined";
                 d_symbol_history.push_back(current_symbol.Prompt_I);
                 break;
             }
@@ -600,45 +710,32 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                 if (d_sample_counter == d_preamble_index + static_cast<uint64_t>(d_preamble_period_symbols))
                     {
                         // call the decoder
+                        // NEW Galileo page part is received
+                        // 0. fetch the symbols into an array
+                        if (d_flag_PLL_180_deg_phase_locked == false)  // normal PLL lock
+                            {
+                                for (uint32_t i = 0; i < d_frame_length_symbols; i++)
+                                    {
+                                        d_page_part_symbols[i] = d_symbol_history[i + d_samples_per_preamble];  // because last symbol of the preamble is just received now!
+                                    }
+                            }
+                        else  // 180 deg. inverted carrier phase PLL lock
+                            {
+                                for (uint32_t i = 0; i < d_frame_length_symbols; i++)
+                                    {
+                                        d_page_part_symbols[i] = -d_symbol_history[i + d_samples_per_preamble];  // because last symbol of the preamble is just received now!
+                                    }
+                            }
                         switch (d_frame_type)
                             {
                             case 1:  // INAV
-                                     // NEW Galileo page part is received
-                                // 0. fetch the symbols into an array
-                                if (d_flag_PLL_180_deg_phase_locked == false)  // normal PLL lock
-                                    {
-                                        for (uint32_t i = 0; i < d_frame_length_symbols; i++)
-                                            {
-                                                d_page_part_symbols[i] = d_symbol_history[i + d_samples_per_preamble];  // because last symbol of the preamble is just received now!
-                                            }
-                                    }
-                                else  // 180 deg. inverted carrier phase PLL lock
-                                    {
-                                        for (uint32_t i = 0; i < d_frame_length_symbols; i++)
-                                            {
-                                                d_page_part_symbols[i] = -d_symbol_history[i + d_samples_per_preamble];  // because last symbol of the preamble is just received now!
-                                            }
-                                    }
                                 decode_INAV_word(d_page_part_symbols.data(), d_frame_length_symbols);
                                 break;
                             case 2:  // FNAV
-                                     // NEW Galileo page part is received
-                                // 0. fetch the symbols into an array
-                                if (d_flag_PLL_180_deg_phase_locked == false)  // normal PLL lock
-                                    {
-                                        for (uint32_t i = 0; i < d_frame_length_symbols; i++)
-                                            {
-                                                d_page_part_symbols[i] = d_symbol_history[i + d_samples_per_preamble];  // because last symbol of the preamble is just received now!
-                                            }
-                                    }
-                                else  // 180 deg. inverted carrier phase PLL lock
-                                    {
-                                        for (uint32_t i = 0; i < d_frame_length_symbols; i++)
-                                            {
-                                                d_page_part_symbols[i] = -d_symbol_history[i + d_samples_per_preamble];  // because last symbol of the preamble is just received now!
-                                            }
-                                    }
                                 decode_FNAV_word(d_page_part_symbols.data(), d_frame_length_symbols);
+                                break;
+                            case 3:  // CNAV
+                                decode_CNAV_word(d_page_part_symbols.data(), d_frame_length_symbols);
                                 break;
                             default:
                                 return -1;
@@ -660,7 +757,7 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                         else
                             {
                                 d_CRC_error_counter++;
-                                if (d_CRC_error_counter > CRC_ERROR_LIMIT)
+                                if ((d_CRC_error_counter > CRC_ERROR_LIMIT) and (d_frame_type != 3))
                                     {
                                         DLOG(INFO) << "Lost of frame sync SAT " << this->d_satellite;
                                         d_flag_frame_sync = false;
@@ -685,7 +782,7 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                 {
                 case 1:  // INAV
                     {
-                        if (d_inav_nav.is_TOW_set() == true)
+                        if (d_inav_nav.get_flag_TOW_set() == true)
                             {
                                 if (d_inav_nav.is_TOW5_set() == true)  // page 5 arrived and decoded, so we are in the odd page (since Tow refers to the even page, we have to add 1 sec)
                                     {
@@ -695,7 +792,7 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                                         d_inav_nav.set_TOW5_flag(false);
                                     }
 
-                                else if (d_inav_nav.is_TOW5_set() == true)  // page 6 arrived and decoded, so we are in the odd page (since Tow refers to the even page, we have to add 1 sec)
+                                else if (d_inav_nav.is_TOW6_set() == true)  // page 6 arrived and decoded, so we are in the odd page (since Tow refers to the even page, we have to add 1 sec)
                                     {
                                         // TOW_6 refers to the even preamble, but when we decode it we are in the odd part, so 1 second later plus the decoding delay
                                         d_TOW_at_Preamble_ms = static_cast<uint32_t>(d_inav_nav.get_TOW6() * 1000.0);
@@ -705,14 +802,14 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                                 else
                                     {
                                         // this page has no timing information
-                                        d_TOW_at_current_symbol_ms += static_cast<uint32_t>(d_PRN_code_period_ms);  // + GALILEO_INAV_PAGE_PART_SYMBOLS*GALILEO_E1_CODE_PERIOD_S;
+                                        d_TOW_at_current_symbol_ms += d_PRN_code_period_ms;
                                     }
                             }
                         break;
                     }
                 case 2:  // FNAV
                     {
-                        if (d_fnav_nav.is_TOW_set() == true)
+                        if (d_fnav_nav.get_flag_TOW_set() == true)
                             {
                                 if (d_fnav_nav.is_TOW1_set() == true)
                                     {
@@ -749,6 +846,10 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                                 break;
                             }
                     }
+                case 3:  // CNAV
+                    {
+                        // TODO
+                    }
                 }
         }
     else  // if there is not a new preamble, we define the TOW of the current symbol
@@ -757,7 +858,7 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                 {
                 case 1:  // INAV
                     {
-                        if (d_inav_nav.is_TOW_set() == true)
+                        if (d_inav_nav.get_flag_TOW_set() == true)
                             {
                                 d_TOW_at_current_symbol_ms += d_PRN_code_period_ms;
                             }
@@ -765,10 +866,15 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                     }
                 case 2:  // FNAV
                     {
-                        if (d_fnav_nav.is_TOW_set() == true)
+                        if (d_fnav_nav.get_flag_TOW_set() == true)
                             {
                                 d_TOW_at_current_symbol_ms += d_PRN_code_period_ms;
                             }
+                        break;
+                    }
+                case 3:  // CNAV
+                    {
+                        // TODO
                         break;
                     }
                 }
@@ -778,9 +884,9 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
         {
         case 1:  // INAV
             {
-                if (d_inav_nav.is_TOW_set())
+                if (d_inav_nav.get_flag_TOW_set() == true)
                     {
-                        if (d_inav_nav.get_flag_GGTO())  // all GGTO parameters arrived
+                        if (d_inav_nav.get_flag_GGTO() == true)  // all GGTO parameters arrived
                             {
                                 d_delta_t = d_inav_nav.get_A0G() + d_inav_nav.get_A1G() * (static_cast<double>(d_TOW_at_current_symbol_ms) / 1000.0 - d_inav_nav.get_t0G() + 604800.0 * (std::fmod(static_cast<float>(d_inav_nav.get_Galileo_week() - d_inav_nav.get_WN0G()), 64.0)));
                             }
@@ -792,15 +898,20 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
 
         case 2:  // FNAV
             {
-                if (d_fnav_nav.is_TOW_set())
+                if (d_fnav_nav.get_flag_TOW_set() == true)
                     {
                         current_symbol.Flag_valid_word = true;
                     }
                 break;
             }
+        case 3:  // CNAV
+            {
+                // TODO
+                break;
+            }
         }
 
-    if (d_inav_nav.is_TOW_set() or d_fnav_nav.is_TOW_set())
+    if (d_inav_nav.get_flag_TOW_set() == true or d_fnav_nav.get_flag_TOW_set() == true)
         {
             current_symbol.TOW_at_current_symbol_ms = d_TOW_at_current_symbol_ms;
             // todo: Galileo to GPS time conversion should be moved to observable block.
@@ -819,12 +930,31 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                         {
                             double tmp_double;
                             uint64_t tmp_ulong_int;
+                            int32_t tmp_int;
                             tmp_double = static_cast<double>(d_TOW_at_current_symbol_ms) / 1000.0;
                             d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
                             tmp_ulong_int = current_symbol.Tracking_sample_counter;
                             d_dump_file.write(reinterpret_cast<char *>(&tmp_ulong_int), sizeof(uint64_t));
                             tmp_double = static_cast<double>(d_TOW_at_Preamble_ms) / 1000.0;
                             d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
+                            switch (d_frame_type)
+                                {
+                                case 1:
+                                    tmp_int = (current_symbol.Prompt_I > 0.0 ? 1 : -1);
+                                    break;
+                                case 2:
+                                    tmp_int = (current_symbol.Prompt_Q > 0.0 ? 1 : -1);
+                                    break;
+                                case 3:
+                                    tmp_int = (current_symbol.Prompt_I > 0.0 ? 1 : -1);
+                                    break;
+                                default:
+                                    tmp_int = 0;
+                                    break;
+                                }
+                            d_dump_file.write(reinterpret_cast<char *>(&tmp_int), sizeof(int32_t));
+                            tmp_int = static_cast<int32_t>(current_symbol.PRN);
+                            d_dump_file.write(reinterpret_cast<char *>(&tmp_int), sizeof(int32_t));
                         }
                     catch (const std::ifstream::failure &e)
                         {

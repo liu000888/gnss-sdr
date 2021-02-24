@@ -3,6 +3,9 @@
  * \author Fergus Noble <fergus@swift-nav.com>
  *
  * -----------------------------------------------------------------------------
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
+ * This file is part of GNSS-SDR.
+ *
  * This file was originally borrowed from libswiftnav
  * <https://github.com/swift-nav/libswiftnav>,
  * a portable C library implementing GNSS related functions and algorithms,
@@ -11,13 +14,8 @@
  * Copyright (C) 2013, 2016 Swift Navigation Inc.
  * Contact: Fergus Noble <fergus@swift-nav.com>
  *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
- * This file is part of GNSS-SDR.
- *
  * SPDX-License-Identifier: LGPL-3.0-only
- *.
+ *
  */
 
 #include "bits.h"
@@ -26,10 +24,6 @@
 
 
 static const uint8_t BITN[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
-
-/** \defgroup bits Bit Utils
- * Bit field packing, unpacking and utility functions.
- * \{ */
 
 /** Computes the parity of a 32-bit word.
  *
@@ -301,5 +295,3 @@ uint8_t count_bits_u8(uint8_t v, uint8_t bv)
         }
     return bv == 1 ? r : 8 - r;
 }
-
-/** \} */

@@ -1,11 +1,8 @@
-# Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 add_subdirectory(supl)
 
@@ -41,6 +38,17 @@ if(ENABLE_FPGA)
         ${CORE_LIBS_HEADERS}
         gnss_sdr_fpga_sample_counter.h
         gnss_sdr_time_counter.h
+    )
+endif()
+
+if(ENABLE_FPGA OR ENABLE_AD9361)
+    set(CORE_LIBS_SOURCES
+        ${CORE_LIBS_SOURCES}
+        uio_fpga.cc
+    )
+    set(CORE_LIBS_HEADERS
+        ${CORE_LIBS_HEADERS}
+        uio_fpga.h
     )
 endif()
 
@@ -87,6 +95,11 @@ if(GNURADIO_USES_STD_POINTERS)
     )
 endif()
 
+target_include_directories(core_libs
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}/src/core/interfaces
+)
+
 if(USE_GENERIC_LAMBDAS)
     set(has_generic_lambdas HAS_GENERIC_LAMBDA=1)
     set(no_has_generic_lambdas HAS_GENERIC_LAMBDA=0)
@@ -107,6 +120,18 @@ if(USE_BOOST_BIND_PLACEHOLDERS)
         PRIVATE
             -DUSE_BOOST_BIND_PLACEHOLDERS=1
     )
+endif()
+
+if(ENABLE_FPGA OR ENABLE_AD9361)
+    if(FILESYSTEM_FOUND)
+        target_compile_definitions(core_libs PRIVATE -DHAS_STD_FILESYSTEM=1)
+        if(find_experimental)
+            target_compile_definitions(core_libs PRIVATE -DHAS_STD_FILESYSTEM_EXPERIMENTAL=1)
+        endif()
+        target_link_libraries(core_libs PRIVATE std::filesystem)
+    else()
+        target_link_libraries(core_libs PRIVATE Boost::filesystem Boost::system)
+    endif()
 endif()
 
 if(ENABLE_CLANG_TIDY)

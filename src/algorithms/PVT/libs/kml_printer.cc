@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -31,6 +28,7 @@
 #include <sys/stat.h>   // for S_IXUSR | S_IRWXG | S_IRWXO
 #include <sys/types.h>  // for mode_t
 
+// clang-format off
 #if HAS_STD_FILESYSTEM
 #include <system_error>
 namespace errorlib = std;
@@ -49,6 +47,7 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 namespace errorlib = boost::system;
 #endif
+// clang-format on
 
 
 Kml_Printer::Kml_Printer(const std::string& base_path)
@@ -61,7 +60,7 @@ Kml_Printer::Kml_Printer(const std::string& base_path)
     if (!fs::exists(p))
         {
             std::string new_folder;
-            for (auto& folder : fs::path(kml_base_path))
+            for (const auto& folder : fs::path(kml_base_path))
                 {
                     new_folder += folder.string();
                     errorlib::error_code ec;

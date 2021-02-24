@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -23,7 +20,7 @@
 #include "GPS_L1_CA.h"
 #include "configuration_interface.h"
 #include "gnss_sdr_flags.h"
-#include "gps_sdr_signal_processing.h"
+#include "gps_sdr_signal_replica.h"
 #include <boost/math/distributions/exponential.hpp>
 #include <glog/logging.h>
 #include <algorithm>
@@ -100,6 +97,8 @@ GpsL1CaPcpsQuickSyncAcquisition::GpsL1CaPcpsQuickSyncAcquisition(
 
     dump_filename_ = configuration_->property(role + ".dump_filename", default_dump_filename);
 
+    bool enable_monitor_output = configuration_->property("AcquisitionMonitor.enable_monitor", false);
+
     int samples_per_ms = round(code_length_);
     code_ = std::vector<std::complex<float>>(code_length_);
     /* Object relevant information for debugging */
@@ -116,7 +115,7 @@ GpsL1CaPcpsQuickSyncAcquisition::GpsL1CaPcpsQuickSyncAcquisition(
             acquisition_cc_ = pcps_quicksync_make_acquisition_cc(folding_factor_,
                 sampled_ms_, max_dwells_, doppler_max_, fs_in_,
                 samples_per_ms, code_length_, bit_transition_flag_,
-                dump_, dump_filename_);
+                dump_, dump_filename_, enable_monitor_output);
 
             stream_to_vector_ = gr::blocks::stream_to_vector::make(item_size_,
                 code_length_ * folding_factor_);
@@ -262,7 +261,7 @@ void GpsL1CaPcpsQuickSyncAcquisition::set_state(int state)
 }
 
 
-float GpsL1CaPcpsQuickSyncAcquisition::calculate_threshold(float pfa)
+float GpsL1CaPcpsQuickSyncAcquisition::calculate_threshold(float pfa) const
 {
     // Calculate the threshold
     unsigned int frequency_bins = 0;

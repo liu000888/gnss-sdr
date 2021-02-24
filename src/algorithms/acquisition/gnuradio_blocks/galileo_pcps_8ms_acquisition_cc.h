@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -31,18 +28,16 @@
 #include <string>
 #include <utility>
 #include <vector>
-#if GNURADIO_USES_STD_POINTERS
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+/** \addtogroup Acquisition
+ * \{ */
+/** \addtogroup Acq_gnuradio_blocks
+ * \{ */
+
 
 class galileo_pcps_8ms_acquisition_cc;
 
-#if GNURADIO_USES_STD_POINTERS
-using galileo_pcps_8ms_acquisition_cc_sptr = std::shared_ptr<galileo_pcps_8ms_acquisition_cc>;
-#else
-using galileo_pcps_8ms_acquisition_cc_sptr = boost::shared_ptr<galileo_pcps_8ms_acquisition_cc>;
-#endif
+using galileo_pcps_8ms_acquisition_cc_sptr = gnss_shared_ptr<galileo_pcps_8ms_acquisition_cc>;
 
 galileo_pcps_8ms_acquisition_cc_sptr
 galileo_pcps_8ms_make_acquisition_cc(uint32_t sampled_ms,
@@ -52,7 +47,8 @@ galileo_pcps_8ms_make_acquisition_cc(uint32_t sampled_ms,
     int32_t samples_per_ms,
     int32_t samples_per_code,
     bool dump,
-    const std::string& dump_filename);
+    const std::string& dump_filename,
+    bool enable_monitor_output);
 
 /*!
  * \brief This class implements a Parallel Code Phase Search Acquisition for
@@ -174,7 +170,8 @@ private:
         int32_t samples_per_ms,
         int32_t samples_per_code,
         bool dump,
-        const std::string& dump_filename);
+        const std::string& dump_filename,
+        bool enable_monitor_output);
 
     galileo_pcps_8ms_acquisition_cc(
         uint32_t sampled_ms,
@@ -184,7 +181,8 @@ private:
         int32_t samples_per_ms,
         int32_t samples_per_code,
         bool dump,
-        const std::string& dump_filename);
+        const std::string& dump_filename,
+        bool enable_monitor_output);
 
     void calculate_magnitudes(
         gr_complex* fft_begin,
@@ -192,9 +190,13 @@ private:
         int32_t doppler_offset);
 
     std::weak_ptr<ChannelFsm> d_channel_fsm;
+#if GNURADIO_FFT_USES_TEMPLATES
+    std::unique_ptr<gr::fft::fft_complex_fwd> d_fft_if;
+    std::unique_ptr<gr::fft::fft_complex_rev> d_ifft;
+#else
     std::unique_ptr<gr::fft::fft_complex> d_fft_if;
     std::unique_ptr<gr::fft::fft_complex> d_ifft;
-
+#endif
     std::vector<std::vector<gr_complex>> d_grid_doppler_wipeoffs;
     std::vector<gr_complex> d_fft_code_A;
     std::vector<gr_complex> d_fft_code_B;
@@ -230,6 +232,10 @@ private:
 
     bool d_active;
     bool d_dump;
+    bool d_enable_monitor_output;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_PCPS_8MS_ACQUISITION_CC_H

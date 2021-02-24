@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -24,14 +21,20 @@
 #include <boost/circular_buffer.hpp>
 #include <vector>
 
+/** \addtogroup Algorithms_Library
+ * \{ */
+/** \addtogroup Algorithm_libs algorithms_libs
+ * \{ */
+
+
 template <class T>
 class Gnss_circular_deque
 {
 public:
     Gnss_circular_deque();                                            //!< Default constructor
     Gnss_circular_deque(unsigned int max_size, unsigned int nchann);  //!< nchann = number of channels; max_size = channel capacity
-    unsigned int size(unsigned int ch);                               //!< Returns the number of available elements in a channel
-    T& at(unsigned int ch, unsigned int pos);                         //!< Returns a reference to an element with bount checking
+    unsigned int size(unsigned int ch) const;                         //!< Returns the number of available elements in a channel
+    T& at(unsigned int ch, unsigned int pos);                         //!< Returns a reference to an element with bound checking
     const T& get(unsigned int ch, unsigned int pos) const;            //!< Returns a const reference to an element without bound checking
     T& front(unsigned int ch);                                        //!< Returns a reference to the first element in the deque
     T& back(unsigned int ch);                                         //!< Returns a reference to the last element in the deque
@@ -61,7 +64,7 @@ Gnss_circular_deque<T>::Gnss_circular_deque(unsigned int max_size, unsigned int 
 
 
 template <class T>
-unsigned int Gnss_circular_deque<T>::size(unsigned int ch)
+unsigned int Gnss_circular_deque<T>::size(unsigned int ch) const
 {
     return d_data[ch].size();
 }
@@ -136,4 +139,7 @@ void Gnss_circular_deque<T>::push_back(unsigned int ch, const T& new_data)
     d_data[ch].push_back(new_data);
 }
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_CIRCULAR_DEQUE_H

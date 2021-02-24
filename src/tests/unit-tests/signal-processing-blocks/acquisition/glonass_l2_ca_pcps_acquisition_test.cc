@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -53,11 +50,7 @@
 // ######## GNURADIO BLOCK MESSAGE RECEVER #########
 class GlonassL2CaPcpsAcquisitionTest_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-typedef std::shared_ptr<GlonassL2CaPcpsAcquisitionTest_msg_rx> GlonassL2CaPcpsAcquisitionTest_msg_rx_sptr;
-#else
-typedef boost::shared_ptr<GlonassL2CaPcpsAcquisitionTest_msg_rx> GlonassL2CaPcpsAcquisitionTest_msg_rx_sptr;
-#endif
+using GlonassL2CaPcpsAcquisitionTest_msg_rx_sptr = gnss_shared_ptr<GlonassL2CaPcpsAcquisitionTest_msg_rx>;
 
 GlonassL2CaPcpsAcquisitionTest_msg_rx_sptr GlonassL2CaPcpsAcquisitionTest_msg_rx_make(concurrent_queue<int>& queue);
 
@@ -66,7 +59,7 @@ class GlonassL2CaPcpsAcquisitionTest_msg_rx : public gr::block
 {
 private:
     friend GlonassL2CaPcpsAcquisitionTest_msg_rx_sptr GlonassL2CaPcpsAcquisitionTest_msg_rx_make(concurrent_queue<int>& queue);
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     explicit GlonassL2CaPcpsAcquisitionTest_msg_rx(concurrent_queue<int>& queue);
     concurrent_queue<int>& channel_internal_queue;
 
@@ -82,7 +75,7 @@ GlonassL2CaPcpsAcquisitionTest_msg_rx_sptr GlonassL2CaPcpsAcquisitionTest_msg_rx
 }
 
 
-void GlonassL2CaPcpsAcquisitionTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
+void GlonassL2CaPcpsAcquisitionTest_msg_rx::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
@@ -90,9 +83,9 @@ void GlonassL2CaPcpsAcquisitionTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
             rx_message = message;
             channel_internal_queue.push(rx_message);
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
-            LOG(WARNING) << "msg_handler_telemetry Bad any cast!";
+            LOG(WARNING) << "msg_handler_channel_events Bad any_cast: " << e.what();
             rx_message = 0;
         }
 }
@@ -103,12 +96,12 @@ GlonassL2CaPcpsAcquisitionTest_msg_rx::GlonassL2CaPcpsAcquisitionTest_msg_rx(con
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&GlonassL2CaPcpsAcquisitionTest_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&GlonassL2CaPcpsAcquisitionTest_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&GlonassL2CaPcpsAcquisitionTest_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&GlonassL2CaPcpsAcquisitionTest_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;

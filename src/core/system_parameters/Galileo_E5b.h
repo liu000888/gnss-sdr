@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -25,6 +22,11 @@
 #include "gnss_frequencies.h"
 #include <cstddef>
 #include <cstdint>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
 
 
 // Carrier and code frequencies
@@ -214,4 +216,6 @@ constexpr char GALILEO_E5B_Q_SECONDARY_CODE[GALILEO_E5B_NUMBER_OF_CODES][101] = 
     "0110010000110001000010111010110110001110101101011011001101101110001110000110010001101010111100000001"};
 
 
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GALILEO_E5B_H

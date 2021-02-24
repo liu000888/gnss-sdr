@@ -5,13 +5,10 @@
  * \author Mara Branzanti 2013. mara.branzanti(at)gmail.com
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -23,6 +20,12 @@
 #include "galileo_almanac.h"
 #include <cstdint>
 
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
+
+
 /*!
  * \brief This class is a storage for the GALILEO ALMANAC data as described in GALILEO ICD
  *
@@ -33,7 +36,7 @@ class Galileo_Almanac_Helper
 public:
     Galileo_Almanac_Helper() = default;  //!< Default constructor
 
-    Galileo_Almanac get_almanac(int i);
+    Galileo_Almanac get_almanac(int i) const;
 
     // Word type 7: Almanac for SVID1 (1/2), almanac reference time and almanac reference week number
     int32_t IOD_a_7{};
@@ -91,4 +94,7 @@ public:
     int32_t E5a_HS_10{};
 };
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_GALILEO_ALMANAC_HELPER_H

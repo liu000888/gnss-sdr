@@ -6,14 +6,11 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2006-2008  Matthew C. Valenti
- * Copyright (C) 2019 C. Fernandez-Prades
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2006-2008  Matthew C. Valenti
+ * Copyright (C) 2019 C. Fernandez-Prades
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * This file is a derived work of the original file, which had this note:
@@ -40,6 +37,13 @@
 
 #include <volk_gnsssdr/volk_gnsssdr.h>
 #include <vector>
+
+/** \addtogroup Telemetry_Decoder
+ * \{ */
+/** \addtogroup Telemetry_Decoder_libs
+ * Utilities for the decoding of GNSS navigation messages.
+ * \{ */
+
 
 /* define constants used throughout the library */
 const float MAXLOG = 1e7; /* Define infinity */
@@ -269,4 +273,6 @@ inline void Viterbi(int output_u_int[],
 }
 
 
-#endif
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_CONVOLUTIONAL_H

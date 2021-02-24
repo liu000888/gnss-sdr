@@ -15,7 +15,7 @@
  *
  * Kay Borre book: K.Borre, D.M.Akos, N.Bertelsen, P.Rinder, and S.H.Jensen,
  * "A Software-Defined GPS and Galileo Receiver. A Single-Frequency
- * Approach", Birkha user, 2007. pp 81-84
+ * Approach", Birkhauser, 2007. pp 81-84
  *
  * \authors <ul>
  *          <li> Javier Arribas, 2011. jarribas(at)cttc.es
@@ -25,13 +25,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -42,6 +39,7 @@
 
 #define CL_SILENCE_DEPRECATION
 #include "channel_fsm.h"
+#include "gnss_block_interface.h"
 #include "gnss_synchro.h"
 #include "opencl/fft_internal.h"
 #include <gnuradio/block.h>
@@ -53,18 +51,16 @@
 #include <memory>  // for weak_ptr
 #include <string>
 #include <vector>
-#if GNURADIO_USES_STD_POINTERS
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+/** \addtogroup Acquisition
+ * \{ */
+/** \addtogroup Acq_gnuradio_blocks
+ * \{ */
+
 
 class pcps_opencl_acquisition_cc;
 
-#if GNURADIO_USES_STD_POINTERS
-typedef std::shared_ptr<pcps_opencl_acquisition_cc> pcps_opencl_acquisition_cc_sptr;
-#else
-typedef boost::shared_ptr<pcps_opencl_acquisition_cc> pcps_opencl_acquisition_cc_sptr;
-#endif
+using pcps_opencl_acquisition_cc_sptr = gnss_shared_ptr<pcps_opencl_acquisition_cc>;
 
 pcps_opencl_acquisition_cc_sptr pcps_make_opencl_acquisition_cc(
     uint32_t sampled_ms,
@@ -75,7 +71,8 @@ pcps_opencl_acquisition_cc_sptr pcps_make_opencl_acquisition_cc(
     int samples_per_code,
     bool bit_transition_flag,
     bool dump,
-    const std::string& dump_filename);
+    const std::string& dump_filename,
+    bool enable_monitor_output);
 
 /*!
  * \brief This class implements a Parallel Code Phase Search Acquisition.
@@ -210,14 +207,16 @@ private:
         int samples_per_ms, int samples_per_code,
         bool bit_transition_flag,
         bool dump,
-        const std::string& dump_filename);
+        const std::string& dump_filename,
+        bool enable_monitor_output);
 
     pcps_opencl_acquisition_cc(uint32_t sampled_ms, uint32_t max_dwells,
         uint32_t doppler_max, int64_t fs_in,
         int samples_per_ms, int samples_per_code,
         bool bit_transition_flag,
         bool dump,
-        const std::string& dump_filename);
+        const std::string& dump_filename,
+        bool enable_monitor_output);
 
     void calculate_magnitudes(gr_complex* fft_begin, int doppler_shift,
         int doppler_offset);
@@ -290,6 +289,10 @@ private:
     bool d_active;
     bool d_core_working;
     bool d_dump;
+    bool d_enable_monitor_output;
 };
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_PCPS_OPENCL_ACQUISITION_CC_H

@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -41,6 +38,7 @@
 #include <boost/bind/bind.hpp>
 #endif
 
+// clang-format off
 #if HAS_STD_FILESYSTEM
 #include <system_error>
 namespace errorlib = std;
@@ -59,6 +57,7 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 namespace errorlib = boost::system;
 #endif
+// clang-format on
 
 
 hybrid_observables_gs_sptr hybrid_observables_gs_make(const Obs_Conf &conf_)
@@ -150,6 +149,18 @@ hybrid_observables_gs::hybrid_observables_gs(const Obs_Conf &conf_) : gr::block(
     d_channel_last_carrier_phase_rads = std::vector<double>(d_nchannels_out, 0.0);
 
     d_smooth_filter_M = static_cast<double>(conf_.smoothing_factor);
+    d_mapStringValues["1C"] = evGPS_1C;
+    d_mapStringValues["2S"] = evGPS_2S;
+    d_mapStringValues["L5"] = evGPS_L5;
+    d_mapStringValues["1B"] = evGAL_1B;
+    d_mapStringValues["5X"] = evGAL_5X;
+    d_mapStringValues["E6"] = evGAL_E6;
+    d_mapStringValues["7X"] = evGAL_7X;
+    d_mapStringValues["1G"] = evGLO_1G;
+    d_mapStringValues["2G"] = evGLO_2G;
+    d_mapStringValues["B1"] = evBDS_B1;
+    d_mapStringValues["B2"] = evBDS_B2;
+    d_mapStringValues["B3"] = evBDS_B3;
 }
 
 
@@ -214,9 +225,9 @@ void hybrid_observables_gs::msg_handler_pvt_to_observables(const pmt::pmt_t &msg
                     LOG(INFO) << "Corrected new RX Time offset: " << static_cast<int>(round(new_rx_clock_offset_s * 1000.0)) << "[ms]";
                 }
         }
-    catch (boost::bad_any_cast &e)
+    catch (const boost::bad_any_cast &e)
         {
-            LOG(WARNING) << "msg_handler_pvt_to_observables Bad any cast!";
+            LOG(WARNING) << "msg_handler_pvt_to_observables Bad any_cast: " << e.what();
         }
 }
 
@@ -560,6 +571,12 @@ void hybrid_observables_gs::smooth_pseudoranges(std::vector<Gnss_Synchro> &data)
                         case evGPS_L5:
                         case evGAL_5X:
                             wavelength_m = SPEED_OF_LIGHT_M_S / FREQ5;
+                            break;
+                        case evGAL_E6:
+                            wavelength_m = SPEED_OF_LIGHT_M_S / FREQ6;
+                            break;
+                        case evGAL_7X:
+                            wavelength_m = SPEED_OF_LIGHT_M_S / FREQ7;
                             break;
                         case evGPS_2S:
                             wavelength_m = SPEED_OF_LIGHT_M_S / FREQ2;

@@ -40,15 +40,13 @@
  *   Value_0, Value_1, Value_2, ..., Value_n, Value_n+1, Value_n+2, ...
  *
  * \author Cillian O'Driscoll cillian.odriscoll (at) gmail . com
+ *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -57,22 +55,20 @@
 #ifndef GNSS_SDR_UNPACK_2BIT_SAMPLES_H
 #define GNSS_SDR_UNPACK_2BIT_SAMPLES_H
 
+#include "gnss_block_interface.h"
 #include <gnuradio/sync_interpolator.h>
 #include <cstdint>
 #include <vector>
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+/** \addtogroup Signal_Source
+ * \{ */
+/** \addtogroup Signal_Source_gnuradio_blocks
+ * \{ */
+
 
 class unpack_2bit_samples;
 
-#if GNURADIO_USES_STD_POINTERS
-using unpack_2bit_samples_sptr = std::shared_ptr<unpack_2bit_samples>;
-#else
-using unpack_2bit_samples_sptr = boost::shared_ptr<unpack_2bit_samples>;
-#endif
+using unpack_2bit_samples_sptr = gnss_shared_ptr<unpack_2bit_samples>;
 
 unpack_2bit_samples_sptr make_unpack_2bit_samples(
     bool big_endian_bytes,
@@ -115,4 +111,7 @@ private:
     bool reverse_interleaving_;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_UNPACK_2BIT_SAMPLES_H

@@ -1,17 +1,14 @@
-#
-# Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
+
 
 ########################################################################
 # Project setup
 ########################################################################
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8.12...3.19)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -154,6 +151,10 @@ if(NOT ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND NOT WIN32) AND NOT (CMAKE_CXX
     endif()
 endif()
 
+########################################################################
+# Common compile flags
+########################################################################
+
 # Disable complex math NaN/INFO range checking for performance
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-fcx-limited-range HAVE_CX_LIMITED_RANGE)
@@ -169,6 +170,21 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_CXX_FLAGS} -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+
+if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+    # Abort compilation if kernel implementations have inconsistent function
+    # prototypes, i.e. if
+    #
+    #     kernel_foo_sse(uint32_t *dst, lv32fc_t *src)
+    #     kernel_foo_avx(uint16_t *dst, lv32fc_t *src)
+    #
+    # are defined. Note the different data type of the first argument). By
+    # default 'incompatible-pointer-types' is a warning only and 'pointer-sign'
+    # is a warning enabled by '-Wall'. These warnings are only applicable to C.
+    if(NOT (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0"))
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror=incompatible-pointer-types -Werror=pointer-sign")
+    endif()
+endif()
 
 option(ENABLE_STRIP "Create a stripped volk_gnsssdr_profile binary (without debugging symbols)" OFF)
 if(ENABLE_STRIP)
@@ -187,7 +203,7 @@ message(STATUS "Build type set to ${CMAKE_BUILD_TYPE}.")
 
 set(VERSION_INFO_MAJOR_VERSION 0)
 set(VERSION_INFO_MINOR_VERSION 0)
-set(VERSION_INFO_MAINT_VERSION 13)
+set(VERSION_INFO_MAINT_VERSION 14)
 include(VolkVersion) # setup version info
 
 
@@ -226,6 +242,32 @@ endif()
 ########################################################################
 # Dependencies setup
 ########################################################################
+
+# cpu_features
+set(SUPPORTED_CPU_FEATURES_ARCH FALSE)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
+  set(SUPPORTED_CPU_FEATURES_ARCH TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+  set(SUPPORTED_CPU_FEATURES_ARCH TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^aarch64")
+  set(SUPPORTED_CPU_FEATURES_ARCH TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64|amd64)|(^i.86$)")
+  set(SUPPORTED_CPU_FEATURES_ARCH TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)")
+  set(SUPPORTED_CPU_FEATURES_ARCH TRUE)
+endif()
+
+if(CMAKE_VERSION VERSION_GREATER 3.0 AND SUPPORTED_CPU_FEATURES_ARCH)
+    set(BUILD_PIC ON CACHE BOOL
+        "Build cpu_features with Position Independent Code (PIC)."
+        FORCE
+    )
+    set(USE_CPU_FEATURES ON)
+    set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
+    set(BUILD_SHARED_LIBS OFF)
+    add_subdirectory(cpu_features)
+    set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
+endif()
 
 # Python
 include(VolkPython) # sets PYTHON_EXECUTABLE
@@ -312,6 +354,14 @@ if(DOXYGEN_FOUND)
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMENT "Generating documentation with Doxygen" VERBATIM
     )
+endif()
+
+
+########################################################################
+# Detect /lib versus /lib64
+########################################################################
+if(${CMAKE_INSTALL_LIBDIR} MATCHES lib64)
+    set(LIB_SUFFIX 64)
 endif()
 
 

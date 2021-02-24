@@ -6,40 +6,30 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
  */
 
 #include "signal_conditioner.h"
-#include "configuration_interface.h"
 #include <glog/logging.h>
 #include <utility>
 
 
 // Constructor
-SignalConditioner::SignalConditioner(const ConfigurationInterface *configuration,
-    std::shared_ptr<GNSSBlockInterface> data_type_adapt,
+SignalConditioner::SignalConditioner(std::shared_ptr<GNSSBlockInterface> data_type_adapt,
     std::shared_ptr<GNSSBlockInterface> in_filt,
     std::shared_ptr<GNSSBlockInterface> res,
-    std::string role,
-    std::string implementation) : data_type_adapt_(std::move(data_type_adapt)),
-                                  in_filt_(std::move(in_filt)),
-                                  res_(std::move(res)),
-                                  role_(std::move(role)),
-                                  implementation_(std::move(implementation))
+    std::string role) : data_type_adapt_(std::move(data_type_adapt)),
+                        in_filt_(std::move(in_filt)),
+                        res_(std::move(res)),
+                        role_(std::move(role))
 {
     connected_ = false;
-    if (configuration)
-        {
-        };
 }
 
 

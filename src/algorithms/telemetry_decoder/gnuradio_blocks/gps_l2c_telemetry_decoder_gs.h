@@ -2,15 +2,13 @@
  * \file gps_l2c_telemetry_decoder_gs.h
  * \brief Interface of a CNAV message demodulator block
  * \author Javier Arribas, 2015. jarribas(at)cttc.es
+ *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -20,36 +18,34 @@
 #define GNSS_SDR_GPS_L2C_TELEMETRY_DECODER_GS_H
 
 
+#include "gnss_block_interface.h"
 #include "gnss_satellite.h"
 #include "gps_cnav_navigation_message.h"
+#include "tlm_conf.h"
 #include <gnuradio/block.h>
 #include <gnuradio/types.h>  // for gr_vector_const_void_star
 #include <cstdint>
 #include <fstream>
 #include <string>
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>  // for std::shared_ptr
-#else
-#include <boost/shared_ptr.hpp>
-#endif
 
 extern "C"
 {
 #include "cnav_msg.h"
 }
 
+/** \addtogroup Telemetry_Decoder
+ * \{ */
+/** \addtogroup Telemetry_Decoder_gnuradio_blocks
+ * \{ */
+
 
 class gps_l2c_telemetry_decoder_gs;
 
-#if GNURADIO_USES_STD_POINTERS
-using gps_l2c_telemetry_decoder_gs_sptr = std::shared_ptr<gps_l2c_telemetry_decoder_gs>;
-#else
-using gps_l2c_telemetry_decoder_gs_sptr = boost::shared_ptr<gps_l2c_telemetry_decoder_gs>;
-#endif
+using gps_l2c_telemetry_decoder_gs_sptr = gnss_shared_ptr<gps_l2c_telemetry_decoder_gs>;
 
 gps_l2c_telemetry_decoder_gs_sptr gps_l2c_make_telemetry_decoder_gs(
     const Gnss_Satellite &satellite,
-    bool dump);
+    const Tlm_Conf &conf);
 
 /*!
  * \brief This class implements a block that decodes CNAV data defined in IS-GPS-200K
@@ -71,9 +67,9 @@ public:
 private:
     friend gps_l2c_telemetry_decoder_gs_sptr gps_l2c_make_telemetry_decoder_gs(
         const Gnss_Satellite &satellite,
-        bool dump);
+        const Tlm_Conf &conf);
 
-    gps_l2c_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump);
+    gps_l2c_telemetry_decoder_gs(const Gnss_Satellite &satellite, const Tlm_Conf &conf);
 
     Gnss_Satellite d_satellite;
 
@@ -100,7 +96,11 @@ private:
     bool d_sent_tlm_failed_msg;
     bool d_flag_PLL_180_deg_phase_locked;
     bool d_flag_valid_word;
+    bool d_dump_mat;
+    bool d_remove_dat;
 };
 
 
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GPS_L2C_TELEMETRY_DECODER_GS_H

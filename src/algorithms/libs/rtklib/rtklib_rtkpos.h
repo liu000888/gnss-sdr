@@ -26,8 +26,6 @@
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-2-Clause
- *
- *
  * -----------------------------------------------------------------------------
  */
 
@@ -36,6 +34,12 @@
 
 #include "rtklib.h"
 #include "rtklib_rtkcmn.h"
+
+/** \addtogroup PVT
+ * \{ */
+/** \addtogroup RTKLIB_Library
+ * \{ */
+
 
 /* constants/macros ----------------------------------------------------------*/
 const double VAR_POS = std::pow(30.0, 2.0);   /* initial variance of receiver pos (m^2) */
@@ -57,10 +61,12 @@ const double TTOL_MOVEB = (1.0 + 2 * DTTOL);
 
 
 /* state variable index */
+// clang-format off
 #define II_RTK(s, opt) (NP_RTK(opt) + (s)-1)                               /* ionos (s:satellite no) */
 #define IT_RTK(r, opt) (NP_RTK(opt) + NI_RTK(opt) + NT_RTK(opt) / 2 * (r)) /* tropos (r:0=rov,1:ref) */
 #define IL_RTK(f, opt) (NP_RTK(opt) + NI_RTK(opt) + NT_RTK(opt) + (f))     /* receiver h/w bias */
 #define IB_RTK(s, f, opt) (NR_RTK(opt) + MAXSAT * (f) + (s)-1)             /* phase bias (s:satno,f:freq) */
+// clang-format on
 
 int rtkopenstat(const char *file, int level);
 
@@ -171,4 +177,6 @@ void rtkfree(rtk_t *rtk);
 int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav);
 
 
-#endif
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_RTKLIB_RKTPOS_H

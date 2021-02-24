@@ -10,13 +10,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -71,7 +68,7 @@ pcps_acquisition_sptr pcps_make_acquisition(const Acq_Conf& conf_)
 
 pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_) : gr::block("pcps_acquisition",
                                                                 gr::io_signature::make(1, 1, conf_.it_size),
-                                                                gr::io_signature::make(0, 0, conf_.it_size))
+                                                                gr::io_signature::make(0, 1, sizeof(Gnss_Synchro)))
 {
     this->message_port_register_out(pmt::mp("events"));
 
@@ -130,11 +127,17 @@ pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_) : gr::block("pcps_acqu
     d_fft_codes = volk_gnsssdr::vector<std::complex<float>>(d_fft_size);
     d_input_signal = volk_gnsssdr::vector<std::complex<float>>(d_fft_size);
 
+#if GNURADIO_FFT_USES_TEMPLATES
+    // Direct FFT
+    d_fft_if = std::make_unique<gr::fft::fft_complex_fwd>(d_fft_size);
+    // Inverse FFT
+    d_ifft = std::make_unique<gr::fft::fft_complex_rev>(d_fft_size);
+#else
     // Direct FFT
     d_fft_if = std::make_unique<gr::fft::fft_complex>(d_fft_size, true);
-
     // Inverse FFT
     d_ifft = std::make_unique<gr::fft::fft_complex>(d_fft_size, false);
+#endif
 
     d_gnss_synchro = nullptr;
     d_worker_active = false;
@@ -253,7 +256,7 @@ bool pcps_acquisition::is_fdma()
 }
 
 
-void pcps_acquisition::update_local_carrier(own::span<gr_complex> carrier_vector, float freq)
+void pcps_acquisition::update_local_carrier(own::span<gr_complex> carrier_vector, float freq) const
 {
     float phase_step_rad;
     if (d_acq_parameters.use_automatic_resampler)
@@ -384,6 +387,14 @@ void pcps_acquisition::send_positive_acquisition()
     else
         {
             this->message_port_pub(pmt::mp("events"), pmt::from_long(1));
+        }
+
+    // Copy and push current Gnss_Synchro to monitor queue
+    if (d_acq_parameters.enable_monitor_output)
+        {
+            Gnss_Synchro current_synchro_data = Gnss_Synchro();
+            current_synchro_data = *d_gnss_synchro;
+            d_monitor_queue.push(current_synchro_data);
         }
 }
 
@@ -592,7 +603,7 @@ float pcps_acquisition::first_vs_second_peak_statistic(uint32_t& indext, int32_t
         }
 
     int32_t idx = excludeRangeIndex1;
-    memcpy(d_tmp_buffer.data(), d_magnitude_grid[index_doppler].data(), d_fft_size);
+    memcpy(d_tmp_buffer.data(), d_magnitude_grid[index_doppler].data(), d_fft_size * sizeof(float));
     do
         {
             d_tmp_buffer[idx] = 0.0;
@@ -645,7 +656,10 @@ void pcps_acquisition::acquisition_core(uint64_t samp_count)
                << ", doppler_step: " << d_doppler_step
                << ", use_CFAR_algorithm_flag: " << (d_use_CFAR_algorithm_flag ? "true" : "false");
 
-    lk.unlock();
+    if (d_acq_parameters.blocking)
+        {
+            lk.unlock();
+        }
 
     // Doppler frequency grid loop
     if (!d_step_two)
@@ -768,7 +782,11 @@ void pcps_acquisition::acquisition_core(uint64_t samp_count)
                 }
         }
 
-    lk.lock();
+    if (d_acq_parameters.blocking)
+        {
+            lk.lock();
+        }
+
     if (!d_acq_parameters.bit_transition_flag)
         {
             if (d_test_statistics > d_threshold)
@@ -903,7 +921,7 @@ void pcps_acquisition::calculate_threshold()
 int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
     gr_vector_int& ninput_items,
     gr_vector_const_void_star& input_items,
-    gr_vector_void_star& output_items __attribute__((unused)))
+    gr_vector_void_star& output_items)
 {
     /*
      * By J.Arribas, L.Esteve and M.Molina
@@ -1010,5 +1028,23 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                 break;
             }
         }
+
+    // Send outputs to the monitor
+    if (d_acq_parameters.enable_monitor_output)
+        {
+            auto** out = reinterpret_cast<Gnss_Synchro**>(&output_items[0]);
+            if (!d_monitor_queue.empty())
+                {
+                    int num_gnss_synchro_objects = d_monitor_queue.size();
+                    for (int i = 0; i < num_gnss_synchro_objects; ++i)
+                        {
+                            Gnss_Synchro current_synchro_data = d_monitor_queue.front();
+                            d_monitor_queue.pop();
+                            *out[i] = current_synchro_data;
+                        }
+                    return num_gnss_synchro_objects;
+                }
+        }
+
     return 0;
 }

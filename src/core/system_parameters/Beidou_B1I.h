@@ -3,15 +3,13 @@
  * \brief  Defines system parameters for BeiDou B1I signal and DNAV data
  * \author Sergi Segura, 2018. sergi.segura.munoz(at)gmail.com
  * \author Damian Miralles, 2018. dmiralles2009@gmail.com
+ *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -23,6 +21,12 @@
 
 #include "gnss_frequencies.h"
 #include <cstdint>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
+
 
 // carrier and code frequencies
 constexpr double BEIDOU_B1I_FREQ_HZ = FREQ1_BDS;         //!< B1I [Hz]
@@ -46,4 +50,6 @@ constexpr char BEIDOU_B1I_GEO_PREAMBLE_SYMBOLS_STR[23] = "1111110000001100001100
 constexpr char BEIDOU_B1I_D2_SECONDARY_CODE_STR[3] = "00";
 
 
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_BEIDOU_B1I_H

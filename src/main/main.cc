@@ -8,20 +8,17 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2019 (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- * Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2019 (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
  */
 
 #ifndef GNSS_SDR_VERSION
-#define GNSS_SDR_VERSION "0.0.13"
+#define GNSS_SDR_VERSION "0.0.14"
 #endif
 
 #ifndef GOOGLE_STRIP_LOG
@@ -49,6 +46,7 @@
 #include <cuda_runtime.h>
 #endif
 
+// clang-format off
 #if HAS_STD_FILESYSTEM
 #include <system_error>
 namespace errorlib = std;
@@ -66,6 +64,14 @@ namespace fs = std::filesystem;
 #include <boost/system/error_code.hpp>       // for error_code
 namespace fs = boost::filesystem;
 namespace errorlib = boost::system;
+#endif
+// clang-format on
+
+#if GFLAGS_OLD_NAMESPACE
+namespace gflags
+{
+using namespace google;
+}
 #endif
 
 /*
@@ -86,9 +92,9 @@ int main(int argc, char** argv)
         "See COPYING file to see a copy of the General Public License\n \n");
 
     const std::string gnss_sdr_version(GNSS_SDR_VERSION);
-    google::SetUsageMessage(intro_help);
-    google::SetVersionString(gnss_sdr_version);
-    google::ParseCommandLineFlags(&argc, &argv, true);
+    gflags::SetUsageMessage(intro_help);
+    gflags::SetVersionString(gnss_sdr_version);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
     std::cout << "Initializing GNSS-SDR v" << gnss_sdr_version << " ... Please wait.\n";
 
 #if CUDA_GPU_ACCEL
@@ -124,7 +130,7 @@ int main(int argc, char** argv)
                             if (!fs::create_directory(p, ec))
                                 {
                                     std::cerr << "Could not create the " << FLAGS_log_dir << " folder. GNSS-SDR program ended.\n";
-                                    google::ShutDownCommandLineFlags();
+                                    gflags::ShutDownCommandLineFlags();
                                     return 1;
                                 }
                         }
@@ -146,7 +152,7 @@ int main(int argc, char** argv)
     catch (const boost::thread_resource_error& e)
         {
             std::cerr << "Failed to create boost thread.\n";
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             std::cout << "GNSS-SDR program ended.\n";
             return 1;
         }
@@ -161,7 +167,7 @@ int main(int argc, char** argv)
                 {
                     std::cerr << "Boost exception: " << boost::diagnostic_information(e) << '\n';
                 }
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             std::cout << "GNSS-SDR program ended.\n";
             return 1;
         }
@@ -176,7 +182,7 @@ int main(int argc, char** argv)
                 {
                     std::cerr << "C++ Standard Library exception: " << ex.what() << '\n';
                 }
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             std::cout << "GNSS-SDR program ended.\n";
             return 1;
         }
@@ -191,7 +197,7 @@ int main(int argc, char** argv)
                 {
                     std::cerr << "Unexpected catch. This should not happen.\n";
                 }
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             std::cout << "GNSS-SDR program ended.\n";
             return 1;
         }
@@ -204,7 +210,7 @@ int main(int argc, char** argv)
               << elapsed_seconds.count()
               << " [seconds]\n";
 
-    google::ShutDownCommandLineFlags();
+    gflags::ShutDownCommandLineFlags();
     std::cout << "GNSS-SDR program ended.\n";
     return return_code;
 }

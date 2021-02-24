@@ -6,17 +6,15 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
  */
+
 #ifndef FRONT_END_CAL_VERSION
 #define FRONT_END_CAL_VERSION "0.0.1"
 #endif
@@ -82,6 +80,13 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 #endif
 
+#if GFLAGS_OLD_NAMESPACE
+namespace gflags
+{
+using namespace google;
+}
+#endif
+
 DECLARE_string(log_dir);
 
 Concurrent_Map<Gps_Ephemeris> global_gps_ephemeris_map;
@@ -99,11 +104,7 @@ Gnss_Synchro gnss_synchro{};
 // ######## GNURADIO BLOCK MESSAGE RECEVER #########
 class FrontEndCal_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-using FrontEndCal_msg_rx_sptr = std::shared_ptr<FrontEndCal_msg_rx>;
-#else
-using FrontEndCal_msg_rx_sptr = boost::shared_ptr<FrontEndCal_msg_rx>;
-#endif
+using FrontEndCal_msg_rx_sptr = gnss_shared_ptr<FrontEndCal_msg_rx>;
 
 FrontEndCal_msg_rx_sptr FrontEndCal_msg_rx_make();
 
@@ -112,7 +113,7 @@ class FrontEndCal_msg_rx : public gr::block
 {
 private:
     friend FrontEndCal_msg_rx_sptr FrontEndCal_msg_rx_make();
-    void msg_handler_events(const pmt::pmt_t& msg);
+    void msg_handler_channel_events(const pmt::pmt_t& msg);
     FrontEndCal_msg_rx();
 
 public:
@@ -126,7 +127,7 @@ FrontEndCal_msg_rx_sptr FrontEndCal_msg_rx_make()
 }
 
 
-void FrontEndCal_msg_rx::msg_handler_events(const pmt::pmt_t& msg)
+void FrontEndCal_msg_rx::msg_handler_channel_events(const pmt::pmt_t& msg)
 {
     try
         {
@@ -134,7 +135,7 @@ void FrontEndCal_msg_rx::msg_handler_events(const pmt::pmt_t& msg)
             rx_message = message;
             channel_internal_queue.push(rx_message);
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
             LOG(WARNING) << "msg_handler_telemetry Bad any cast!\n";
             rx_message = 0;
@@ -147,12 +148,12 @@ FrontEndCal_msg_rx::FrontEndCal_msg_rx() : gr::block("FrontEndCal_msg_rx", gr::i
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&FrontEndCal_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&FrontEndCal_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&FrontEndCal_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&FrontEndCal_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;
@@ -274,9 +275,9 @@ int main(int argc, char** argv)
         "This program comes with ABSOLUTELY NO WARRANTY;\n" +
         "See COPYING file to see a copy of the General Public License\n \n");
 
-    google::SetUsageMessage(intro_help);
+    gflags::SetUsageMessage(intro_help);
     google::SetVersionString(FRONT_END_CAL_VERSION);
-    google::ParseCommandLineFlags(&argc, &argv, true);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     std::cout << "Initializing... Please wait.\n";
 
@@ -514,7 +515,7 @@ int main(int argc, char** argv)
             else
                 {
                     std::cout << "Unable to get Ephemeris SUPL assistance. TOW is unknown!\n";
-                    google::ShutDownCommandLineFlags();
+                    gflags::ShutDownCommandLineFlags();
                     std::cout << "GNSS-SDR Front-end calibration program ended.\n";
                     return 0;
                 }
@@ -522,7 +523,7 @@ int main(int argc, char** argv)
     catch (const boost::exception& e)
         {
             std::cout << "Exception in getting Global ephemeris map\n";
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             std::cout << "GNSS-SDR Front-end calibration program ended.\n";
             return 0;
         }
@@ -541,7 +542,7 @@ int main(int argc, char** argv)
     if (doppler_measurements_map.empty())
         {
             std::cout << "Sorry, no GPS satellites detected in the front-end capture, please check the antenna setup...\n";
-            google::ShutDownCommandLineFlags();
+            gflags::ShutDownCommandLineFlags();
             std::cout << "GNSS-SDR Front-end calibration program ended.\n";
             return 0;
         }
@@ -635,6 +636,6 @@ int main(int argc, char** argv)
                 }
         }
 
-    google::ShutDownCommandLineFlags();
+    gflags::ShutDownCommandLineFlags();
     std::cout << "GNSS-SDR Front-end calibration program ended.\n";
 }

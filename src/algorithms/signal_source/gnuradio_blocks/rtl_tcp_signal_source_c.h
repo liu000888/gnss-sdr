@@ -12,13 +12,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -27,6 +24,7 @@
 #ifndef GNSS_SDR_RTL_TCP_SIGNAL_SOURCE_C_H
 #define GNSS_SDR_RTL_TCP_SIGNAL_SOURCE_C_H
 
+#include "gnss_block_interface.h"
 #include "rtl_tcp_dongle_info.h"
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -37,19 +35,17 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+
+/** \addtogroup Signal_Source
+ * \{ */
+/** \addtogroup Signal_Source_gnuradio_blocks
+ * \{ */
+
 
 class rtl_tcp_signal_source_c;
 
-#if GNURADIO_USES_STD_POINTERS
-using rtl_tcp_signal_source_c_sptr = std::shared_ptr<rtl_tcp_signal_source_c>;
-#else
-using rtl_tcp_signal_source_c_sptr = boost::shared_ptr<rtl_tcp_signal_source_c>;
-#endif
+using rtl_tcp_signal_source_c_sptr = gnss_shared_ptr<rtl_tcp_signal_source_c>;
 
 #if USE_BOOST_ASIO_IO_CONTEXT
 using b_io_context = boost::asio::io_context;
@@ -124,4 +120,7 @@ private:
     bool flip_iq_;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_RTL_TCP_SIGNAL_SOURCE_C_H

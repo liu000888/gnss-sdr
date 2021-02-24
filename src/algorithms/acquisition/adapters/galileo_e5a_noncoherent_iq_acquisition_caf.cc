@@ -12,13 +12,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -27,7 +24,7 @@
 #include "galileo_e5a_noncoherent_iq_acquisition_caf.h"
 #include "Galileo_E5a.h"
 #include "configuration_interface.h"
-#include "galileo_e5_signal_processing.h"
+#include "galileo_e5_signal_replica.h"
 #include "gnss_sdr_flags.h"
 #include <boost/math/distributions/exponential.hpp>
 #include <glog/logging.h>
@@ -94,6 +91,8 @@ GalileoE5aNoncoherentIQAcquisitionCaf::GalileoE5aNoncoherentIQAcquisitionCaf(
     codeQ_ = std::vector<std::complex<float>>(vector_length_);
     both_signal_components = false;
 
+    bool enable_monitor_output = configuration->property("AcquisitionMonitor.enable_monitor", false);
+
     std::string sig_ = configuration_->property("Channel.signal", std::string("5X"));
     if (sig_.at(0) == '5' && sig_.at(1) == 'X')
         {
@@ -104,7 +103,7 @@ GalileoE5aNoncoherentIQAcquisitionCaf::GalileoE5aNoncoherentIQAcquisitionCaf(
             item_size_ = sizeof(gr_complex);
             acquisition_cc_ = galileo_e5a_noncoherentIQ_make_acquisition_caf_cc(sampled_ms_, max_dwells_,
                 doppler_max_, fs_in_, code_length_, code_length_, bit_transition_flag_,
-                dump_, dump_filename_, both_signal_components, CAF_window_hz_, Zero_padding);
+                dump_, dump_filename_, both_signal_components, CAF_window_hz_, Zero_padding, enable_monitor_output);
         }
     else
         {
@@ -272,7 +271,7 @@ void GalileoE5aNoncoherentIQAcquisitionCaf::reset()
 }
 
 
-float GalileoE5aNoncoherentIQAcquisitionCaf::calculate_threshold(float pfa)
+float GalileoE5aNoncoherentIQAcquisitionCaf::calculate_threshold(float pfa) const
 {
     // Calculate the threshold
     unsigned int frequency_bins = 0;

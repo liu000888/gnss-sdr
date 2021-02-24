@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -25,6 +22,12 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
+
 
 const std::vector<std::pair<int32_t, int32_t>> FNAV_PAGE_TYPE_BIT({{1, 6}});
 
@@ -174,4 +177,7 @@ const std::vector<std::pair<int32_t, int32_t>> FNAV_AF0_3_6_BIT({{181, 16}});
 const std::vector<std::pair<int32_t, int32_t>> FNAV_AF1_3_6_BIT({{197, 13}});
 const std::vector<std::pair<int32_t, int32_t>> FNAV_E5AHS_3_6_BIT({{210, 2}});
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GALILEO_FNAV_H

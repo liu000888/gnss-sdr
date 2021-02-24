@@ -1,37 +1,38 @@
 /*!
- * \file gps_l1_ca_telemetry_decoder_gs.cc
- * \brief Implementation of a NAV message demodulator block based on
- * Kay Borre book MATLAB-based GPS receiver
- * \author Javier Arribas, 2011. jarribas(at)cttc.es
- *
- * -----------------------------------------------------------------------------
- *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
- * This file is part of GNSS-SDR.
- *
- * SPDX-License-Identifier: GPL-3.0-or-later
- *
- * -----------------------------------------------------------------------------
- */
+* \file gps_l1_ca_telemetry_decoder_gs.cc
+* \brief Implementation of a NAV message demodulator block based on
+* Kay Borre book MATLAB-based GPS receiver
+* \author Javier Arribas, 2011. jarribas(at)cttc.es
+*
+* -----------------------------------------------------------------------------
+*
+* Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
+*
+* GNSS-SDR is a software defined Global Navigation
+*          Satellite Systems receiver
+*
+* This file is part of GNSS-SDR.
+*
+* SPDX-License-Identifier: GPL-3.0-or-later
+*
+* -----------------------------------------------------------------------------
+*/
 
 #include "gps_l1_ca_telemetry_decoder_gs.h"
 #include "gps_ephemeris.h"  // for Gps_Ephemeris
 #include "gps_iono.h"       // for Gps_Iono
 #include "gps_utc_model.h"  // for Gps_Utc_Model
+#include "tlm_utils.h"
 #include <glog/logging.h>
 #include <gnuradio/io_signature.h>
 #include <pmt/pmt.h>        // for make_any
 #include <pmt/pmt_sugar.h>  // for mp
 #include <cmath>            // for round
+#include <cstddef>          // for size_t
 #include <cstring>          // for memcpy
 #include <exception>        // for exception
 #include <iostream>         // for cout
 #include <memory>           // for shared_ptr
-
 
 #ifdef COMPILER_HAS_ROTL
 #include <bit>
@@ -49,16 +50,16 @@ auto rotl = [](uint32_t x, uint32_t n) { return (((x) << (n)) ^ ((x) >> (32 - (n
 
 
 gps_l1_ca_telemetry_decoder_gs_sptr
-gps_l1_ca_make_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump)
+gps_l1_ca_make_telemetry_decoder_gs(const Gnss_Satellite &satellite, const Tlm_Conf &conf)
 {
-    return gps_l1_ca_telemetry_decoder_gs_sptr(new gps_l1_ca_telemetry_decoder_gs(satellite, dump));
+    return gps_l1_ca_telemetry_decoder_gs_sptr(new gps_l1_ca_telemetry_decoder_gs(satellite, conf));
 }
 
 
 gps_l1_ca_telemetry_decoder_gs::gps_l1_ca_telemetry_decoder_gs(
     const Gnss_Satellite &satellite,
-    bool dump) : gr::block("gps_navigation_gs", gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
-                     gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
+    const Tlm_Conf &conf) : gr::block("gps_navigation_gs", gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
+                                gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -71,7 +72,11 @@ gps_l1_ca_telemetry_decoder_gs::gps_l1_ca_telemetry_decoder_gs(
     d_sent_tlm_failed_msg = false;
 
     // initialize internal vars
-    d_dump = dump;
+    d_dump_filename = conf.dump_filename;
+    d_dump = conf.dump;
+    d_dump_mat = conf.dump_mat;
+    d_remove_dat = conf.remove_dat;
+
     d_satellite = Gnss_Satellite(satellite.get_system(), satellite.get_PRN());
     DLOG(INFO) << "Initializing GPS L1 TELEMETRY DECODER";
 
@@ -119,8 +124,10 @@ gps_l1_ca_telemetry_decoder_gs::gps_l1_ca_telemetry_decoder_gs(
 gps_l1_ca_telemetry_decoder_gs::~gps_l1_ca_telemetry_decoder_gs()
 {
     DLOG(INFO) << "GPS L1 C/A Telemetry decoder block (channel " << d_channel << ") destructor called.";
+    size_t pos = 0;
     if (d_dump_file.is_open() == true)
         {
+            pos = d_dump_file.tellp();
             try
                 {
                     d_dump_file.close();
@@ -128,6 +135,24 @@ gps_l1_ca_telemetry_decoder_gs::~gps_l1_ca_telemetry_decoder_gs()
             catch (const std::exception &ex)
                 {
                     LOG(WARNING) << "Exception in destructor closing the dump file " << ex.what();
+                }
+            if (pos == 0)
+                {
+                    if (!tlm_remove_file(d_dump_filename))
+                        {
+                            LOG(WARNING) << "Error deleting temporary file";
+                        }
+                }
+        }
+    if (d_dump && (pos != 0) && d_dump_mat)
+        {
+            save_tlm_matfile(d_dump_filename);
+            if (d_remove_dat)
+                {
+                    if (!tlm_remove_file(d_dump_filename))
+                        {
+                            LOG(WARNING) << "Error deleting temporary file";
+                        }
                 }
         }
 }
@@ -181,7 +206,6 @@ void gps_l1_ca_telemetry_decoder_gs::set_channel(int32_t channel)
                 {
                     try
                         {
-                            d_dump_filename = "telemetry";
                             d_dump_filename.append(std::to_string(d_channel));
                             d_dump_filename.append(".dat");
                             d_dump_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -291,8 +315,8 @@ bool gps_l1_ca_telemetry_decoder_gs::decode_subframe()
                                 }
                             break;
                         case 5:
-                            // get almanac (if available)
-                            // TODO: implement almanac reader in navigation_message
+                        // get almanac (if available)
+                        // TODO: implement almanac reader in navigation_message
                         default:
                             break;
                         }
@@ -501,12 +525,17 @@ int gps_l1_ca_telemetry_decoder_gs::general_work(int noutput_items __attribute__
                         {
                             double tmp_double;
                             uint64_t tmp_ulong_int;
+                            int32_t tmp_int;
                             tmp_double = static_cast<double>(d_TOW_at_current_symbol_ms) / 1000.0;
                             d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
                             tmp_ulong_int = current_symbol.Tracking_sample_counter;
                             d_dump_file.write(reinterpret_cast<char *>(&tmp_ulong_int), sizeof(uint64_t));
                             tmp_double = static_cast<double>(d_TOW_at_Preamble_ms) / 1000.0;
                             d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
+                            tmp_int = (current_symbol.Prompt_I > 0.0 ? 1 : -1);
+                            d_dump_file.write(reinterpret_cast<char *>(&tmp_int), sizeof(int32_t));
+                            tmp_int = static_cast<int32_t>(current_symbol.PRN);
+                            d_dump_file.write(reinterpret_cast<char *>(&tmp_int), sizeof(int32_t));
                         }
                     catch (const std::ifstream::failure &e)
                         {

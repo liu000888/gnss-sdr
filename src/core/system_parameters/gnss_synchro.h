@@ -5,15 +5,13 @@
  *  Luis Esteve, 2012. luis(at)epsilon-formacion.com
  *  Javier Arribas, 2012. jarribas(at)cttc.es
  *  Álvaro Cebrián Juan, 2018. acebrianjuan(at)gmail.com
+ *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -25,6 +23,13 @@
 #include <boost/serialization/nvp.hpp>
 #include <cstdint>
 #include <utility>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters core_system_parameters
+ * GNSS parameters
+ * \{ */
+
 
 /*!
  * \brief This is the class that contains the information that is shared
@@ -204,4 +209,7 @@ public:
     }
 };
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_GNSS_SYNCHRO_H

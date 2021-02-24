@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -44,20 +41,12 @@
 #else
 #include <gnuradio/analog/sig_source_c.h>
 #endif
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
 
 // ######## GNURADIO BLOCK MESSAGE RECEVER #########
 class GpsL2MDllPllTrackingTest_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-using GpsL2MDllPllTrackingTest_msg_rx_sptr = std::shared_ptr<GpsL2MDllPllTrackingTest_msg_rx>;
-#else
-using GpsL2MDllPllTrackingTest_msg_rx_sptr = boost::shared_ptr<GpsL2MDllPllTrackingTest_msg_rx>;
-#endif
+using GpsL2MDllPllTrackingTest_msg_rx_sptr = gnss_shared_ptr<GpsL2MDllPllTrackingTest_msg_rx>;
 
 GpsL2MDllPllTrackingTest_msg_rx_sptr GpsL2MDllPllTrackingTest_msg_rx_make();
 
@@ -65,7 +54,7 @@ class GpsL2MDllPllTrackingTest_msg_rx : public gr::block
 {
 private:
     friend GpsL2MDllPllTrackingTest_msg_rx_sptr GpsL2MDllPllTrackingTest_msg_rx_make();
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     GpsL2MDllPllTrackingTest_msg_rx();
 
 public:
@@ -80,16 +69,16 @@ GpsL2MDllPllTrackingTest_msg_rx_sptr GpsL2MDllPllTrackingTest_msg_rx_make()
 }
 
 
-void GpsL2MDllPllTrackingTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
+void GpsL2MDllPllTrackingTest_msg_rx::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
             int64_t message = pmt::to_long(std::move(msg));
             rx_message = message;
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
-            LOG(WARNING) << "msg_handler_telemetry Bad any cast!";
+            LOG(WARNING) << "msg_handler_channel_events Bad any_cast: " << e.what();
             rx_message = 0;
         }
 }
@@ -100,12 +89,12 @@ GpsL2MDllPllTrackingTest_msg_rx::GpsL2MDllPllTrackingTest_msg_rx() : gr::block("
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&GpsL2MDllPllTrackingTest_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&GpsL2MDllPllTrackingTest_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&GpsL2MDllPllTrackingTest_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&GpsL2MDllPllTrackingTest_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;

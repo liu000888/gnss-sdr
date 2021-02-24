@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -23,6 +20,7 @@
 #ifndef GNSS_SDR_HYBRID_OBSERVABLES_GS_H
 #define GNSS_SDR_HYBRID_OBSERVABLES_GS_H
 
+#include "gnss_block_interface.h"
 #include "obs_conf.h"
 #include <boost/circular_buffer.hpp>  // for boost::circular_buffer
 #include <gnuradio/block.h>           // for block
@@ -35,10 +33,13 @@
 #include <string>                     // for std::string
 #include <typeinfo>                   // for typeid
 #include <vector>                     // for std::vector
-#if GNURADIO_USES_STD_POINTERS
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+/** \addtogroup Observables
+ * \{ */
+/** \addtogroup Observables_gnuradio_blocks obs_gr_blocks
+ * GNU Radio blocks for the computation of GNSS observables
+ * \{ */
+
 
 class Gnss_Synchro;
 class hybrid_observables_gs;
@@ -46,11 +47,7 @@ class hybrid_observables_gs;
 template <class T>
 class Gnss_circular_deque;
 
-#if GNURADIO_USES_STD_POINTERS
-using hybrid_observables_gs_sptr = std::shared_ptr<hybrid_observables_gs>;
-#else
-using hybrid_observables_gs_sptr = boost::shared_ptr<hybrid_observables_gs>;
-#endif
+using hybrid_observables_gs_sptr = gnss_shared_ptr<hybrid_observables_gs>;
 
 hybrid_observables_gs_sptr hybrid_observables_gs_make(const Obs_Conf& conf_);
 
@@ -90,6 +87,8 @@ private:
         evSBAS_1C,
         evGAL_1B,
         evGAL_5X,
+        evGAL_E6,
+        evGAL_7X,
         evGLO_1G,
         evGLO_2G,
         evBDS_B1,
@@ -123,4 +122,6 @@ private:
     bool d_dump_mat;
 };
 
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_HYBRID_OBSERVABLES_GS_H

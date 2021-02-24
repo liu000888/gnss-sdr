@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -30,6 +27,7 @@
 #include "galileo_e5a_noncoherent_iq_acquisition_caf.h"
 #include "galileo_e5a_pcps_acquisition.h"
 #include "gnss_block_factory.h"
+#include "gnss_block_interface.h"
 #include "gnss_sdr_valve.h"
 #include "gnuplot_i.h"
 #include "gps_l1_ca_pcps_acquisition.h"
@@ -82,21 +80,11 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 #endif
 
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/shared_ptr.hpp>
-#endif
-
 
 // ######## GNURADIO TRACKING BLOCK MESSAGE RECEVER #########
 class TrackingPullInTest_msg_rx;
 
-#if GNURADIO_USES_STD_POINTERS
-using TrackingPullInTest_msg_rx_sptr = std::shared_ptr<TrackingPullInTest_msg_rx>;
-#else
-using TrackingPullInTest_msg_rx_sptr = boost::shared_ptr<TrackingPullInTest_msg_rx>;
-#endif
+using TrackingPullInTest_msg_rx_sptr = gnss_shared_ptr<TrackingPullInTest_msg_rx>;
 
 TrackingPullInTest_msg_rx_sptr TrackingPullInTest_msg_rx_make();
 
@@ -104,7 +92,7 @@ class TrackingPullInTest_msg_rx : public gr::block
 {
 private:
     friend TrackingPullInTest_msg_rx_sptr TrackingPullInTest_msg_rx_make();
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     TrackingPullInTest_msg_rx();
 
 public:
@@ -119,7 +107,7 @@ TrackingPullInTest_msg_rx_sptr TrackingPullInTest_msg_rx_make()
 }
 
 
-void TrackingPullInTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
+void TrackingPullInTest_msg_rx::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
@@ -127,7 +115,7 @@ void TrackingPullInTest_msg_rx::msg_handler_events(pmt::pmt_t msg)
             rx_message = message;  // 3 -> loss of lock
             // std::cout << "Received trk message: " << rx_message << '\n';
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
             LOG(WARNING) << "msg_handler_tracking Bad cast!";
             rx_message = 0;
@@ -140,12 +128,12 @@ TrackingPullInTest_msg_rx::TrackingPullInTest_msg_rx() : gr::block("TrackingPull
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&TrackingPullInTest_msg_rx::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&TrackingPullInTest_msg_rx::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&TrackingPullInTest_msg_rx::msg_handler_events, this, _1));
+        boost::bind(&TrackingPullInTest_msg_rx::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;
@@ -567,8 +555,7 @@ bool TrackingPullInTest::acquire_signal(int SV_ID)
                             taps = gr::filter::firdes::low_pass(1.0,
                                 baseband_sampling_freq,
                                 acq_fs / 2.1,
-                                acq_fs / 10,
-                                gr::filter::firdes::win_type::WIN_HAMMING);
+                                acq_fs / 10);
                             std::cout << "Enabled decimation low pass filter with " << taps.size() << " taps and decimation factor of " << decimation << '\n';
                             acquisition->set_resampler_latency((taps.size() - 1) / 2);
                             gr::basic_block_sptr fir_filter_ccf_ = gr::filter::fir_filter_ccf::make(decimation, taps);
@@ -592,11 +579,7 @@ bool TrackingPullInTest::acquire_signal(int SV_ID)
             top_block_acq->connect(gr_interleaved_char_to_complex, 0, acquisition->get_left_block(), 0);
             // top_block_acq->connect(head_samples, 0, acquisition->get_left_block(), 0);
         }
-#if GNURADIO_USES_STD_POINTERS
-    std::shared_ptr<Acquisition_msg_rx> msg_rx;
-#else
-    boost::shared_ptr<Acquisition_msg_rx> msg_rx;
-#endif
+    gnss_shared_ptr<Acquisition_msg_rx> msg_rx;
     try
         {
             msg_rx = Acquisition_msg_rx_make();

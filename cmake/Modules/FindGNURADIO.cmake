@@ -1,10 +1,8 @@
-# Copyright (C) 2011-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2011-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 ########################################################################
 # Find GNU Radio
@@ -13,6 +11,11 @@
 if(NOT COMMAND feature_summary)
     include(FeatureSummary)
 endif()
+
+if(NOT PKG_CONFIG_FOUND)
+    include(FindPkgConfig)
+endif()
+
 include(FindPackageHandleStandardArgs)
 
 # if GR_REQUIRED_COMPONENTS is not defined, it will be set to the following list
@@ -280,6 +283,13 @@ if(GNURADIO_VERSION VERSION_GREATER 3.8.99)
             set(GNURADIO_USES_STD_POINTERS TRUE)
         endif()
     endforeach()
+endif()
+
+# Detect if FFT are templates
+if(EXISTS ${GNURADIO_FFT_INCLUDE_DIRS}/gnuradio/fft/fft_vfc.h)
+    set(GNURADIO_FFT_USES_TEMPLATES FALSE)
+else()
+    set(GNURADIO_FFT_USES_TEMPLATES TRUE)
 endif()
 
 # Search for IIO component

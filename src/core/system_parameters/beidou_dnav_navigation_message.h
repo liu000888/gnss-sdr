@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -36,6 +33,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
 
 
 /*!
@@ -101,7 +103,7 @@ public:
     /*!
      * \brief Returns true if new Iono model has arrived. The flag is set to false when the function is executed
      */
-    bool have_new_iono();
+    bool have_new_iono() const;
 
     /*!
      * \brief Returns true if new UTC model has arrived. The flag is set to false when the function is executed
@@ -326,4 +328,7 @@ private:
     bool flag_sf1_p10{};  // D2 NAV Message, Subframe 1, Page 10 decoded indicator
 };
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_BEIDOU_DNAV_NAVIGATION_MESSAGE_H

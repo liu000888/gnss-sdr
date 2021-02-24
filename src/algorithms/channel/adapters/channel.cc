@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -29,15 +26,19 @@
 #include <utility>  // for std::move
 
 
-Channel::Channel(const ConfigurationInterface* configuration, uint32_t channel, std::shared_ptr<AcquisitionInterface> acq,
-    std::shared_ptr<TrackingInterface> trk, std::shared_ptr<TelemetryDecoderInterface> nav,
-    const std::string& role, const std::string& signal_str, Concurrent_Queue<pmt::pmt_t>* queue)
+Channel::Channel(const ConfigurationInterface* configuration,
+    uint32_t channel,
+    std::shared_ptr<AcquisitionInterface> acq,
+    std::shared_ptr<TrackingInterface> trk,
+    std::shared_ptr<TelemetryDecoderInterface> nav,
+    const std::string& role,
+    const std::string& signal_str,
+    Concurrent_Queue<pmt::pmt_t>* queue) : acq_(std::move(acq)),
+                                           trk_(std::move(trk)),
+                                           nav_(std::move(nav)),
+                                           role_(role),
+                                           channel_(channel)
 {
-    acq_ = std::move(acq);
-    trk_ = std::move(trk);
-    nav_ = std::move(nav);
-    role_ = role;
-    channel_ = channel;
     channel_fsm_ = std::make_shared<ChannelFsm>();
 
     flag_enable_fpga_ = configuration->property("GNSS-SDR.enable_FPGA", false);
@@ -170,6 +171,10 @@ gr::basic_block_sptr Channel::get_left_block_trk()
     return trk_->get_left_block();
 }
 
+gr::basic_block_sptr Channel::get_right_block_trk()
+{
+    return trk_->get_right_block();
+}
 
 gr::basic_block_sptr Channel::get_left_block_acq()
 {
@@ -180,6 +185,10 @@ gr::basic_block_sptr Channel::get_left_block_acq()
     return acq_->get_left_block();
 }
 
+gr::basic_block_sptr Channel::get_right_block_acq()
+{
+    return acq_->get_right_block();
+}
 
 gr::basic_block_sptr Channel::get_right_block()
 {

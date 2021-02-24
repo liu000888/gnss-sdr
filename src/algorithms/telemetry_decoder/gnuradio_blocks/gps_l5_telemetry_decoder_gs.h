@@ -4,13 +4,10 @@
  * \author Antonio Ramos, 2017. antonio.ramos(at)cttc.es
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -20,38 +17,36 @@
 #define GNSS_SDR_GPS_L5_TELEMETRY_DECODER_GS_H
 
 
-#include "GPS_L5.h"                       // for GPS_L5I_NH_CODE_LENGTH
+#include "GPS_L5.h"  // for GPS_L5I_NH_CODE_LENGTH
+#include "gnss_block_interface.h"
 #include "gnss_satellite.h"               // for Gnss_Satellite
 #include "gps_cnav_navigation_message.h"  // for Gps_CNAV_Navigation_Message
+#include "tlm_conf.h"
 #include <boost/circular_buffer.hpp>
 #include <gnuradio/block.h>
 #include <gnuradio/types.h>  // for gr_vector_const_void_star
 #include <cstdint>
 #include <fstream>
 #include <string>
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>  // for std::shared_ptr
-#else
-#include <boost/shared_ptr.hpp>
-#endif
 
 extern "C"
 {
 #include "cnav_msg.h"
 }
 
+/** \addtogroup Telemetry_Decoder
+ * \{ */
+/** \addtogroup Telemetry_Decoder_gnuradio_blocks
+ * \{ */
+
 
 class gps_l5_telemetry_decoder_gs;
 
-#if GNURADIO_USES_STD_POINTERS
-using gps_l5_telemetry_decoder_gs_sptr = std::shared_ptr<gps_l5_telemetry_decoder_gs>;
-#else
-using gps_l5_telemetry_decoder_gs_sptr = boost::shared_ptr<gps_l5_telemetry_decoder_gs>;
-#endif
+using gps_l5_telemetry_decoder_gs_sptr = gnss_shared_ptr<gps_l5_telemetry_decoder_gs>;
 
 gps_l5_telemetry_decoder_gs_sptr gps_l5_make_telemetry_decoder_gs(
     const Gnss_Satellite &satellite,
-    bool dump);
+    const Tlm_Conf &conf);
 
 /*!
  * \brief This class implements a GPS L5 Telemetry decoder
@@ -70,9 +65,9 @@ public:
 private:
     friend gps_l5_telemetry_decoder_gs_sptr gps_l5_make_telemetry_decoder_gs(
         const Gnss_Satellite &satellite,
-        bool dump);
+        const Tlm_Conf &conf);
 
-    gps_l5_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump);
+    gps_l5_telemetry_decoder_gs(const Gnss_Satellite &satellite, const Tlm_Conf &conf);
 
     cnav_msg_decoder_t d_cnav_decoder{};
 
@@ -96,7 +91,11 @@ private:
     bool d_flag_valid_word;
     bool d_sent_tlm_failed_msg;
     bool d_dump;
+    bool d_dump_mat;
+    bool d_remove_dat;
 };
 
 
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GPS_L5_TELEMETRY_DECODER_GS_H

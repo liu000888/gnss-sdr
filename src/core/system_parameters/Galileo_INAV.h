@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -26,13 +23,18 @@
 #include <utility>
 #include <vector>
 
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
+
 
 // Galileo INAV message structure
-constexpr int32_t GALILEO_INAV_PREAMBLE_LENGTH_BITS = 10;
 constexpr double GALILEO_INAV_PAGE_PART_WITH_PREABLE_SECONDS = 2.04;  //!< Page Duration + (Galileo I/NAV Preamble bits)*(Galileo E5b-I tiered Code Period(seconds))
+constexpr uint32_t GALILEO_INAV_PAGE_SYMBOLS = 500;                   //!< The complete Galileo INAV page length
+constexpr int32_t GALILEO_INAV_PREAMBLE_LENGTH_BITS = 10;
 constexpr int32_t GALILEO_INAV_PREAMBLE_PERIOD_SYMBOLS = 250;
 constexpr int32_t GALILEO_INAV_PAGE_PART_SYMBOLS = 250;  //!< Each Galileo INAV pages are composed of two parts (even and odd) each of 250 symbols, including preamble. See Galileo ICD 4.3.2
-constexpr int32_t GALILEO_INAV_PAGE_SYMBOLS = 500;       //!< The complete Galileo INAV page length
 constexpr int32_t GALILEO_INAV_PAGE_PART_SECONDS = 1;    // a page part last 1 sec
 constexpr int32_t GALILEO_INAV_PAGE_PART_MS = 1000;      // a page part last 1 sec
 constexpr int32_t GALILEO_INAV_PAGE_SECONDS = 2;         // a full page last 2 sec
@@ -249,4 +251,7 @@ const std::vector<std::pair<int32_t, int32_t>> TIME_0_BIT({{7, 2}});
 const std::vector<std::pair<int32_t, int32_t>> WN_0_BIT({{97, 12}});
 const std::vector<std::pair<int32_t, int32_t>> TOW_0_BIT({{109, 20}});
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_GALILEO_INAV_H

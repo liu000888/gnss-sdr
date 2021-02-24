@@ -8,13 +8,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -27,6 +24,12 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+
+/** \addtogroup Algorithms_Library
+ * \{ */
+/** \addtogroup Algorithm_libs algorithms_libs
+ * \{ */
+
 
 using item_type_converter_t = std::function<void(void *, const void *, uint32_t)>;
 
@@ -76,4 +79,7 @@ bool item_type_is_complex(const std::string &item_type);
 item_type_converter_t make_vector_converter(const std::string &input_type,
     const std::string &output_type);
 
-#endif
+
+/** \} */
+/** \} */
+#endif  // GNSS_SDR_ITEM_TYPE_HELPERS_H

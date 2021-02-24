@@ -2,15 +2,13 @@
  * \file Beidou_DNAV.h
  * \brief  Defines system parameters for BeiDou DNAV data processing
  * \author Damian Miralles, 2018. dmiralles2009@gmail.com
+ *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -24,6 +22,11 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup System_Parameters
+ * \{ */
 
 
 // DNAV SCALE FACTORS
@@ -280,4 +283,7 @@ const std::vector<std::pair<int32_t, int32_t> > D2_OMEGA({{269, 32}});
 // D2 NAV, SUBFRAME 1, PAGE 10
 const std::vector<std::pair<int32_t, int32_t> > D2_IDOT({{52, 1}, {61, 13}});
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_BEIDOU_DNAV_H

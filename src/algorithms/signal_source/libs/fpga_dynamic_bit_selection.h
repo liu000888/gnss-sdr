@@ -10,13 +10,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -28,6 +25,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+
+/** \addtogroup Signal_Source
+ * \{ */
+/** \addtogroup Signal_Source_libs
+ * \{ */
+
 
 /*!
  * \brief Class that controls the switch in the FPGA, which connects the FPGA acquisition and multicorrelator modules to
@@ -62,8 +65,8 @@ private:
     static const uint32_t shift_out_bit_max = Num_bits_ADC - Num_bits_FPGA;       // maximum possible value for the bit selection
     // received signal power thresholds for the bit selection
     // the received signal power is estimated as the averaged squared absolute value of the received signal samples
-    static const uint32_t Power_Threshold_High = 15000;
-    static const uint32_t Power_Threshold_Low = 6000;
+    static const uint32_t Power_Threshold_High = 9000;
+    static const uint32_t Power_Threshold_Low = 3000;
 
     void close_devices(void);
 
@@ -77,4 +80,7 @@ private:
     int d_device_descriptor2;        // driver descriptor corresponding to frequency band 2
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_FPGA_DYNAMIC_BIT_SELECTION_H

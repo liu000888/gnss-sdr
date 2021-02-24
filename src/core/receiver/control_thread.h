@@ -9,13 +9,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -44,6 +41,13 @@
 #ifdef ENABLE_FPGA
 #include <boost/thread.hpp>  // for boost::thread
 #endif
+
+/** \addtogroup Core Core GNSS Receiver
+ * Core GNSS Receiver.
+ * \{ */
+/** \addtogroup Core_Receiver
+ * Classes for the core GNSS receiver.
+ * \{ */
 
 
 class ConfigurationInterface;
@@ -133,7 +137,7 @@ private:
     /*
      * Blocking function that reads the GPS assistance queue
      */
-    void gps_acq_assist_data_collector();
+    void gps_acq_assist_data_collector() const;
 
     /*
      * Compute elevations for the specified time and position for all the available satellites in ephemeris and almanac queues
@@ -206,4 +210,7 @@ private:
     bool pre_2009_file_;  // to override the system time to postprocess old gnss records and avoid wrong week rollover
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_CONTROL_THREAD_H

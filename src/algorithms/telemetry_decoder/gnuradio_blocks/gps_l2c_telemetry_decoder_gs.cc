@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -25,28 +22,31 @@
 #include "gps_cnav_ephemeris.h"  // for Gps_CNAV_Ephemeris
 #include "gps_cnav_iono.h"       // for Gps_CNAV_Iono
 #include "gps_cnav_utc_model.h"  // for Gps_CNAV_Utc_Model
+#include "tlm_utils.h"
 #include <glog/logging.h>
 #include <gnuradio/io_signature.h>
 #include <pmt/pmt.h>        // for make_any
 #include <pmt/pmt_sugar.h>  // for mp
 #include <bitset>           // for bitset
 #include <cmath>            // for round
+#include <cstddef>          // for size_t
 #include <exception>        // for exception
 #include <iostream>         // for cout
 #include <memory>           // for shared_ptr, make_shared
 
 
 gps_l2c_telemetry_decoder_gs_sptr
-gps_l2c_make_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump)
+gps_l2c_make_telemetry_decoder_gs(const Gnss_Satellite &satellite, const Tlm_Conf &conf)
 {
-    return gps_l2c_telemetry_decoder_gs_sptr(new gps_l2c_telemetry_decoder_gs(satellite, dump));
+    return gps_l2c_telemetry_decoder_gs_sptr(new gps_l2c_telemetry_decoder_gs(satellite, conf));
 }
 
 
 gps_l2c_telemetry_decoder_gs::gps_l2c_telemetry_decoder_gs(
-    const Gnss_Satellite &satellite, bool dump) : gr::block("gps_l2c_telemetry_decoder_gs",
-                                                      gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
-                                                      gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
+    const Gnss_Satellite &satellite,
+    const Tlm_Conf &conf) : gr::block("gps_l2c_telemetry_decoder_gs",
+                                gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
+                                gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -59,7 +59,10 @@ gps_l2c_telemetry_decoder_gs::gps_l2c_telemetry_decoder_gs(
     d_max_symbols_without_valid_frame = GPS_L2_CNAV_DATA_PAGE_BITS * GPS_L2_SYMBOLS_PER_BIT * 5;  // rise alarm if 5 consecutive subframes have no valid CRC
 
     // initialize internal vars
-    d_dump = dump;
+    d_dump_filename = conf.dump_filename;
+    d_dump = conf.dump;
+    d_dump_mat = conf.dump_mat;
+    d_remove_dat = conf.remove_dat;
     d_satellite = Gnss_Satellite(satellite.get_system(), satellite.get_PRN());
     DLOG(INFO) << "GPS L2C M TELEMETRY PROCESSING: satellite " << d_satellite;
     // set_output_multiple (1);
@@ -81,8 +84,10 @@ gps_l2c_telemetry_decoder_gs::gps_l2c_telemetry_decoder_gs(
 gps_l2c_telemetry_decoder_gs::~gps_l2c_telemetry_decoder_gs()
 {
     DLOG(INFO) << "GPS L2C Telemetry decoder block (channel " << d_channel << ") destructor called.";
+    size_t pos = 0;
     if (d_dump_file.is_open() == true)
         {
+            pos = d_dump_file.tellp();
             try
                 {
                     d_dump_file.close();
@@ -90,6 +95,24 @@ gps_l2c_telemetry_decoder_gs::~gps_l2c_telemetry_decoder_gs()
             catch (const std::exception &ex)
                 {
                     LOG(WARNING) << "Exception in destructor closing the dump file " << ex.what();
+                }
+            if (pos == 0)
+                {
+                    if (!tlm_remove_file(d_dump_filename))
+                        {
+                            LOG(WARNING) << "Error deleting temporary file";
+                        }
+                }
+        }
+    if (d_dump && (pos != 0) && d_dump_mat)
+        {
+            save_tlm_matfile(d_dump_filename);
+            if (d_remove_dat)
+                {
+                    if (!tlm_remove_file(d_dump_filename))
+                        {
+                            LOG(WARNING) << "Error deleting temporary file";
+                        }
                 }
         }
 }
@@ -113,7 +136,6 @@ void gps_l2c_telemetry_decoder_gs::set_channel(int channel)
                 {
                     try
                         {
-                            d_dump_filename = "telemetry_L2CM_";
                             d_dump_filename.append(std::to_string(d_channel));
                             d_dump_filename.append(".dat");
                             d_dump_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -252,12 +274,17 @@ int gps_l2c_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
                 {
                     double tmp_double;
                     uint64_t tmp_ulong_int;
+                    int32_t tmp_int;
                     tmp_double = d_TOW_at_current_symbol;
                     d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
                     tmp_ulong_int = current_synchro_data.Tracking_sample_counter;
                     d_dump_file.write(reinterpret_cast<char *>(&tmp_ulong_int), sizeof(uint64_t));
                     tmp_double = d_TOW_at_Preamble;
                     d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
+                    tmp_int = (current_synchro_data.Prompt_I > 0.0 ? 1 : -1);
+                    d_dump_file.write(reinterpret_cast<char *>(&tmp_int), sizeof(int32_t));
+                    tmp_int = static_cast<int32_t>(current_synchro_data.PRN);
+                    d_dump_file.write(reinterpret_cast<char *>(&tmp_int), sizeof(int32_t));
                 }
             catch (const std::ifstream::failure &e)
                 {

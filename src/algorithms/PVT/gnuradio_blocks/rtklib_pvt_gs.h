@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -20,6 +17,7 @@
 #ifndef GNSS_SDR_RTKLIB_PVT_GS_H
 #define GNSS_SDR_RTKLIB_PVT_GS_H
 
+#include "gnss_block_interface.h"
 #include "gnss_synchro.h"
 #include "rtklib.h"
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -36,10 +34,13 @@
 #include <string>                 // for string
 #include <sys/types.h>            // for key_t
 #include <vector>                 // for vector
-#if GNURADIO_USES_STD_POINTERS
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+/** \addtogroup PVT
+ * \{ */
+/** \addtogroup PVT_gnuradio_blocks pvt_gr_blocks
+ * GNU Radio blocks for the computation of PVT solutions.
+ * \{ */
+
 
 class Beidou_Dnav_Almanac;
 class Beidou_Dnav_Ephemeris;
@@ -58,11 +59,7 @@ class Rtcm_Printer;
 class Rtklib_Solver;
 class rtklib_pvt_gs;
 
-#if GNURADIO_USES_STD_POINTERS
-using rtklib_pvt_gs_sptr = std::shared_ptr<rtklib_pvt_gs>;
-#else
-using rtklib_pvt_gs_sptr = boost::shared_ptr<rtklib_pvt_gs>;
-#endif
+using rtklib_pvt_gs_sptr = gnss_shared_ptr<rtklib_pvt_gs>;
 
 rtklib_pvt_gs_sptr rtklib_make_pvt_gs(uint32_t nchannels,
     const Pvt_Conf& conf_,
@@ -156,7 +153,7 @@ private:
         long mtype;  // NOLINT(google-runtime-int) required by SysV queue messaging
         double ttff;
     } d_ttff_msgbuf;
-    bool send_sys_v_ttff_msg(d_ttff_msgbuf ttff);
+    bool send_sys_v_ttff_msg(d_ttff_msgbuf ttff) const;
 
     bool save_gnss_synchro_map_xml(const std::string& file_name);  // debug helper function
     bool load_gnss_synchro_map_xml(const std::string& file_name);  // debug helper function
@@ -190,6 +187,8 @@ private:
         evSBAS_1C,
         evGAL_1B,
         evGAL_5X,
+        evGAL_E6,
+        evGAL_7X,
         evGLO_1G,
         evGLO_2G,
         evBDS_B1,
@@ -253,20 +252,20 @@ private:
     bool d_dump;
     bool d_dump_mat;
     bool d_rinex_output_enabled;
-    bool d_rinex_header_written;
-    bool d_rinex_header_updated;
     bool d_geojson_output_enabled;
     bool d_gpx_output_enabled;
     bool d_kml_output_enabled;
     bool d_nmea_output_file_enabled;
+    bool d_rtcm_enabled;
     bool d_first_fix;
     bool d_xml_storage;
     bool d_flag_monitor_pvt_enabled;
     bool d_show_local_time_zone;
     bool d_waiting_obs_block_rx_clock_offset_correction_msg;
     bool d_enable_rx_clock_correction;
-    bool d_rtcm_writing_started;
-    bool d_rtcm_enabled;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_RTKLIB_PVT_GS_H

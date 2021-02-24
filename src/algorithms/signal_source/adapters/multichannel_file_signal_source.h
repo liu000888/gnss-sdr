@@ -9,13 +9,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -32,13 +29,15 @@
 #include <gnuradio/hier_block2.h>
 #include <pmt/pmt.h>
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
-#if GNURADIO_USES_STD_POINTERS
-#else
-#include <boost/shared_ptr.hpp>
-#endif
+
+
+/** \addtogroup Signal_Source
+ * \{ */
+/** \addtogroup Signal_Source_adapters
+ * \{ */
+
 
 class ConfigurationInterface;
 
@@ -105,11 +104,7 @@ public:
 
 private:
     std::vector<gr::blocks::file_source::sptr> file_source_vec_;
-#if GNURADIO_USES_STD_POINTERS
-    std::shared_ptr<gr::block> valve_;
-#else
-    boost::shared_ptr<gr::block> valve_;
-#endif
+    gnss_shared_ptr<gr::block> valve_;
     gr::blocks::file_sink::sptr sink_;
     std::vector<gr::blocks::throttle::sptr> throttle_vec_;
     std::vector<std::string> filename_vec_;
@@ -126,4 +121,7 @@ private:
     bool enable_throttle_control_;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_MULTICHANNEL_FILE_SIGNAL_SOURCE_H

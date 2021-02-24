@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -33,6 +30,14 @@
 
 #include <gnuradio/filter/firdes.h>
 #include <string>
+
+/** \addtogroup Resampler
+ * Classes for input signal resampling
+ * \{ */
+/** \addtogroup Resampler_adapters resampler_adapters
+ * Classes that wrap GNU Radio resampler blocks with a GNSSBlockInterface
+ * \{ */
+
 
 class ConfigurationInterface;
 
@@ -88,4 +93,7 @@ private:
     bool dump_;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_FRACTIONAL_RESAMPLER_CONDITIONER_H

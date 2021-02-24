@@ -10,13 +10,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -31,6 +28,7 @@
 #include "galileo_e1_pcps_ambiguous_acquisition_fpga.h"
 #include "galileo_e5a_pcps_acquisition_fpga.h"
 #include "gnss_block_factory.h"
+#include "gnss_block_interface.h"
 #include "gnuplot_i.h"
 #include "gps_l1_ca_pcps_acquisition_fpga.h"
 #include "gps_l5i_pcps_acquisition_fpga.h"
@@ -81,21 +79,11 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 #endif
 
-#if GNURADIO_USES_STD_POINTERS
-#include <memory>
-#else
-#include <boost/shared_ptr.hpp>
-#endif
-
 
 // ######## GNURADIO TRACKING BLOCK MESSAGE RECEVER #########
 class TrackingPullInTest_msg_rx_Fpga;
 
-#if GNURADIO_USES_STD_POINTERS
-using TrackingPullInTest_msg_rx_Fpga_sptr = std::shared_ptr<TrackingPullInTest_msg_rx_Fpga>;
-#else
-using TrackingPullInTest_msg_rx_Fpga_sptr = boost::shared_ptr<TrackingPullInTest_msg_rx_Fpga>;
-#endif
+using TrackingPullInTest_msg_rx_Fpga_sptr = gnss_shared_ptr<TrackingPullInTest_msg_rx_Fpga>;
 
 TrackingPullInTest_msg_rx_Fpga_sptr TrackingPullInTest_msg_rx_Fpga_make();
 
@@ -103,7 +91,7 @@ class TrackingPullInTest_msg_rx_Fpga : public gr::block
 {
 private:
     friend TrackingPullInTest_msg_rx_Fpga_sptr TrackingPullInTest_msg_rx_Fpga_make();
-    void msg_handler_events(pmt::pmt_t msg);
+    void msg_handler_channel_events(const pmt::pmt_t msg);
     TrackingPullInTest_msg_rx_Fpga();
 
 public:
@@ -118,14 +106,14 @@ TrackingPullInTest_msg_rx_Fpga_sptr TrackingPullInTest_msg_rx_Fpga_make()
 }
 
 
-void TrackingPullInTest_msg_rx_Fpga::msg_handler_events(pmt::pmt_t msg)
+void TrackingPullInTest_msg_rx_Fpga::msg_handler_channel_events(const pmt::pmt_t msg)
 {
     try
         {
             int64_t message = pmt::to_long(std::move(msg));
             rx_message = message;  // 3 -> loss of lock
         }
-    catch (boost::bad_any_cast& e)
+    catch (const boost::bad_any_cast& e)
         {
             LOG(WARNING) << "msg_handler_tracking Bad cast!";
             rx_message = 0;
@@ -138,12 +126,12 @@ TrackingPullInTest_msg_rx_Fpga::TrackingPullInTest_msg_rx_Fpga() : gr::block("Tr
     this->message_port_register_in(pmt::mp("events"));
     this->set_msg_handler(pmt::mp("events"),
 #if HAS_GENERIC_LAMBDA
-        [this](auto&& PH1) { msg_handler_events(PH1); });
+        [this](auto&& PH1) { msg_handler_channel_events(PH1); });
 #else
 #if USE_BOOST_BIND_PLACEHOLDERS
-        boost::bind(&TrackingPullInTest_msg_rx_Fpga::msg_handler_events, this, boost::placeholders::_1));
+        boost::bind(&TrackingPullInTest_msg_rx_Fpga::msg_handler_channel_events, this, boost::placeholders::_1));
 #else
-        boost::bind(&TrackingPullInTest_msg_rx_Fpga::msg_handler_events, this, _1));
+        boost::bind(&TrackingPullInTest_msg_rx_Fpga::msg_handler_channel_events, this, _1));
 #endif
 #endif
     rx_message = 0;

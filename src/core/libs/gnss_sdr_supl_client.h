@@ -8,13 +8,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -45,6 +42,12 @@ extern "C"
 #include <fstream>
 #include <map>
 #include <string>
+
+/** \addtogroup Core
+ * \{ */
+/** \addtogroup Core_Receiver_Library
+ * \{ */
+
 
 /*!
  * \brief class that implements a C++ interface to external Secure User Location Protocol (SUPL) client library..
@@ -264,4 +267,7 @@ private:
     int ci;
 };
 
+
+/** \} */
+/** \} */
 #endif  // GNSS_SDR_SUPL_CLIENT_H
