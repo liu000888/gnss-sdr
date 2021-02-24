@@ -219,7 +219,7 @@ void beidou_b3i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
                 }
         }
 
-    if (d_satellite.get_PRN() > 0 and d_satellite.get_PRN() < 6)
+    if ((d_satellite.get_PRN() > 0 and d_satellite.get_PRN() < 6) or (d_satellite.get_PRN() > 0 and d_satellite.get_PRN() < 6))
         {
             d_nav.d2_subframe_decoder(data_bits);
         }
@@ -305,7 +305,7 @@ void beidou_b3i_telemetry_decoder_gs::set_satellite(
     d_nav.set_signal_type(5);  // BDS: data source (0:unknown,1:B1I,2:B1Q,3:B2I,4:B2Q,5:B3I,6:B3Q)
 
     // Update tel dec parameters for D2 NAV Messages
-    if (sat_prn > 0 and sat_prn < 6)
+    if ((sat_prn > 0 and sat_prn < 6) or (sat_prn > 58 and sat_prn < 64))
         {
             d_symbols_per_preamble = BEIDOU_DNAV_PREAMBLE_LENGTH_SYMBOLS;
             d_samples_per_preamble = BEIDOU_DNAV_PREAMBLE_LENGTH_SYMBOLS;

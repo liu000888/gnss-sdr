@@ -29,8 +29,8 @@
 #include <boost/bind/bind.hpp>
 #endif
 
-#include <volk/volk.h>
-#include <volk_gnsssdr/volk_gnsssdr.h>
+// #include <volk/volk.h>
+// #include <volk_gnsssdr/volk_gnsssdr.h>
 
 const int FIFO_SIZE = 14720000 * 2;
 
@@ -158,6 +158,7 @@ bool Gr_Complex_Simple_Tcp_Source::start()
     if (open() == true)
         {
             // start pcap capture thread
+            d_thread_status = true;
             d_pcap_thread = new boost::thread(
 #if HAS_GENERIC_LAMBDA
                 [this] { my_pcap_loop_thread(); });
@@ -177,8 +178,12 @@ bool Gr_Complex_Simple_Tcp_Source::stop()
     // if (descr != nullptr)
     if (1)
         {
+            close(d_sock_raw);
+            d_thread_status = false;
+            usleep(10000);
+            // TODO loop must be broken
+            // d_pcap_thread->join();
             // pcap_breakloop(descr);
-            d_pcap_thread->join();
             // pcap_close(descr);
         }
     return true;
@@ -203,12 +208,12 @@ bool Gr_Complex_Simple_Tcp_Source::open()
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
     d_si_me_len = sizeof(si_me);
 
-    // set reuseaddr 
+    // set reuseaddr
     int sock_opt = 1;
     if (setsockopt(d_sock_raw, SOL_SOCKET, SO_REUSEADDR, &sock_opt, sizeof(sock_opt)) == -1)
-    {
-        std::cout << "Error setting port reuse\n";
-    }
+        {
+            std::cout << "Error setting port reuse\n";
+        }
 
     // bind socket to port
     if (bind(d_sock_raw, reinterpret_cast<struct sockaddr *>(&si_me), d_si_me_len) == -1)
@@ -217,7 +222,7 @@ bool Gr_Complex_Simple_Tcp_Source::open()
             return false;
         }
     // debug file
-    d_ofile_dump = new std::ofstream("/tmp/signalsource.dat");
+    // d_ofile_dump = new std::ofstream("/media/sf_bds_samples/bds3.dat");
     return true;
 }
 
@@ -230,8 +235,8 @@ Gr_Complex_Simple_Tcp_Source::~Gr_Complex_Simple_Tcp_Source()
         }
     delete fifo_buff;
     std::cout << "Stop Ethernet packet capture\n";
-    d_ofile_dump->flush();
-    d_ofile_dump->close();
+    // d_ofile_dump->flush();
+    // d_ofile_dump->close();
 }
 
 void Gr_Complex_Simple_Tcp_Source::my_pcap_loop_thread()
@@ -242,18 +247,20 @@ void Gr_Complex_Simple_Tcp_Source::my_pcap_loop_thread()
         }
     do
         {
-            int rc = accept(d_sock_raw, (struct sockaddr *)&si_me, &d_si_me_len);
-            if (rc == -1)
+            int accept_rc = accept(d_sock_raw, (struct sockaddr *)&si_me, &d_si_me_len);
+            if (accept_rc == -1 || accept_rc == 0)
                 {
-                    sleep(1);
+                    usleep(100);
+                    std::cout << "Waiting...\r";
                 }
             else
                 {
                     std::cout << "Accept a connect\n";
-                    d_sock_accept = rc;
+                    d_sock_accept = accept_rc;
                 }
         }
-    while (1);
+    while (d_thread_status);
+    close(d_sock_accept);
 }
 
 // Read data from fifo, de-interleave baseband data, put them into output_items
@@ -319,25 +326,24 @@ void Gr_Complex_Simple_Tcp_Source::demux_samples(const gr_vector_void_star &outp
                                     static_cast<gr_complex *>(output_item)[n] = gr_complex(real, imag);
                                 }
                         }
-
                     break;
                 case 3:  // interleaved float samples
                     for (auto &output_item : output_items)
                         {
                             float real;
                             float imag;
-                            memcpy(&real, &buf[n * d_bytes_per_sample], sizeof(float));
-                            memcpy(&imag, &buf[n * d_bytes_per_sample + sizeof(float)], sizeof(float));
+                            // memcpy(&real, &buf[n * d_bytes_per_sample], sizeof(float));
+                            // memcpy(&imag, &buf[n * d_bytes_per_sample + sizeof(float)], sizeof(float));
+                            real = reinterpret_cast<float *>(buf)[n * 2];
+                            imag = reinterpret_cast<float *>(buf)[n * 2 + 1];
                             if (d_IQ_swap)
-                                {
-                                    static_cast<gr_complex *>(output_item)[n] = gr_complex(real, imag);
-                                }
-                            else
                                 {
                                     static_cast<gr_complex *>(output_item)[n] = gr_complex(imag, real);
                                 }
-
-                            // static_cast<std::vector<gr_complex *>>(output_items) =
+                            else
+                                {
+                                    static_cast<gr_complex *>(output_item)[n] = gr_complex(real, imag);
+                                }
                         }
                     break;
                 case 4:  // interleaved short samples
@@ -346,15 +352,17 @@ void Gr_Complex_Simple_Tcp_Source::demux_samples(const gr_vector_void_star &outp
                         {
                             short real;
                             short imag;
-                            memcpy(&real, &buf[2 * n * sizeof(short)], sizeof(short));
-                            memcpy(&imag, &buf[2 * n * sizeof(short) + sizeof(short)], sizeof(short));
+                            // memcpy(&real, &buf[2 * n * sizeof(short)], sizeof(short));
+                            // memcpy(&imag, &buf[2 * n * sizeof(short) + sizeof(short)], sizeof(short));
+                            real = reinterpret_cast<short *>(buf)[n * 2];
+                            imag = reinterpret_cast<short *>(buf)[n * 2 + 1];
                             if (d_IQ_swap)
                                 {
-                                    static_cast<gr_complex *>(output_item)[n] = gr_complex(real / 100.0f, imag / 100.0f);
+                                    static_cast<gr_complex *>(output_item)[n] = gr_complex(imag, real);
                                 }
                             else
                                 {
-                                    static_cast<gr_complex *>(output_item)[n] = gr_complex(imag / 100.0f, real / 100.0f);
+                                    static_cast<gr_complex *>(output_item)[n] = gr_complex(real, imag);
                                 }
                         }
                     break;

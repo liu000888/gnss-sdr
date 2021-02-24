@@ -104,6 +104,7 @@ private:
     int d_bytes_per_sample;
     bool d_IQ_swap;
     bool d_fifo_full;
+    bool d_thread_status;
 
     std::ofstream *d_ofile_dump;
 };

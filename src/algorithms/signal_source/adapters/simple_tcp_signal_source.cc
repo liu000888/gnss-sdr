@@ -92,11 +92,11 @@ SimpleTcpSignalSource::SimpleTcpSignalSource(const ConfigurationInterface* confi
 void SimpleTcpSignalSource::connect(gr::top_block_sptr top_block)
 {
     // connect null sinks to unused streams
-    for (int n = 0; n < channels_in_tcp_; n++)
-        {
-            top_block->connect(tcp_gnss_rx_source_, n, null_sinks_.at(n), 0);
-        }
-    DLOG(INFO) << "connected tcp_source to null_sinks to enable the use of spare channels\n";
+    // for (int n = 0; n < channels_in_tcp_; n++)
+    //     {
+    //         top_block->connect(tcp_gnss_rx_source_, n, null_sinks_.at(n), 0);
+    //     }
+    // DLOG(INFO) << "connected tcp_source to null_sinks to enable the use of spare channels\n";
 
     if (dump_)
         {
@@ -112,10 +112,10 @@ void SimpleTcpSignalSource::connect(gr::top_block_sptr top_block)
 void SimpleTcpSignalSource::disconnect(gr::top_block_sptr top_block)
 {
     // disconnect null sinks to unused streams
-    for (int n = 0; n < channels_in_tcp_; n++)
-        {
-            top_block->disconnect(tcp_gnss_rx_source_, n, null_sinks_.at(n), 0);
-        }
+    // for (int n = 0; n < channels_in_tcp_; n++)
+    //     {
+    //         top_block->disconnect(tcp_gnss_rx_source_, n, null_sinks_.at(n), 0);
+    //     }
     if (dump_)
         {
             for (int n = 0; n < channels_in_tcp_; n++)
