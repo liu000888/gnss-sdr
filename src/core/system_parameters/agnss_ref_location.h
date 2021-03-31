@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -49,7 +46,8 @@ public:
     template <class Archive>
 
     /*!
-     * \brief Serialize is a boost standard method to be called by the boost XML serialization. Here is used to save the Ref location on disk file.
+     * \brief Serialize is a boost standard method to be called by the boost XML
+     * serialization. Here is used to save the Ref location on disk file.
      */
     inline void serialize(Archive& archive, const unsigned int version)
     {
@@ -57,10 +55,10 @@ public:
         if (version)
             {
             };
-        archive& make_nvp("lat", lat);
-        archive& make_nvp("lon", lon);
-        archive& make_nvp("uncertainty", uncertainty);
-        archive& make_nvp("valid", valid);
+        archive& BOOST_SERIALIZATION_NVP(lat);
+        archive& BOOST_SERIALIZATION_NVP(lon);
+        archive& BOOST_SERIALIZATION_NVP(uncertainty);
+        archive& BOOST_SERIALIZATION_NVP(valid);
     }
 };
 

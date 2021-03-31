@@ -1,14 +1,12 @@
-# Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 set(SYSTEM_PARAMETERS_SOURCES
+    gnss_ephemeris.cc
     gnss_satellite.cc
     gnss_signal.cc
     gps_navigation_message.cc
@@ -22,14 +20,16 @@ set(SYSTEM_PARAMETERS_SOURCES
     beidou_dnav_navigation_message.cc
     beidou_dnav_ephemeris.cc
     sbas_ephemeris.cc
-    gps_cnav_ephemeris.cc
     gps_cnav_navigation_message.cc
     glonass_gnav_ephemeris.cc
     glonass_gnav_utc_model.cc
     glonass_gnav_navigation_message.cc
+    reed_solomon.cc
 )
 
 set(SYSTEM_PARAMETERS_HEADERS
+    gnss_almanac.h
+    gnss_ephemeris.h
     gnss_satellite.h
     gnss_signal.h
     gps_navigation_message.h
@@ -83,6 +83,7 @@ set(SYSTEM_PARAMETERS_HEADERS
     Beidou_B3I.h
     Beidou_DNAV.h
     MATH_CONSTANTS.h
+    reed_solomon.h
 )
 
 list(SORT SYSTEM_PARAMETERS_HEADERS)

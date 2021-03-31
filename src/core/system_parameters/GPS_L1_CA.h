@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -76,7 +73,7 @@ constexpr char GPS_CA_PREAMBLE[9] = "10001011";
 constexpr char GPS_CA_PREAMBLE_SYMBOLS_STR[161] = "1111111111111111111100000000000000000000000000000000000000000000000000000000000011111111111111111111000000000000000000001111111111111111111111111111111111111111";
 
 // GPS NAVIGATION MESSAGE STRUCTURE
-// NAVIGATION MESSAGE FIELDS POSITIONS (from IS-GPS-200K Appendix II)
+// NAVIGATION MESSAGE FIELDS POSITIONS (from IS-GPS-200L Appendix II)
 
 // SUBFRAME 1-5 (TLM and HOW)
 

@@ -1,11 +1,8 @@
-# Copyright (C) 2010-2020 (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2021 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 ################################################################################
 # Project setup
@@ -97,6 +94,8 @@ option(ENABLE_SYSTEM_TESTING_EXTRA "Download external tools and build extra syst
 
 option(ENABLE_GNSS_SIM_INSTALL "Enable the installation of gnss_sim on the fly" ON)
 
+option(ENABLE_OWN_CPUFEATURES "Force the building of the cpu_features library even if it is already installed" ON)
+
 if(NOT (ENABLE_UNIT_TESTING_EXTRA OR ENABLE_SYSTEM_TESTING_EXTRA OR ENABLE_FPGA))
     set(ENABLE_GNSS_SIM_INSTALL OFF)
 endif()
@@ -113,7 +112,8 @@ if(ENABLE_FPGA)
 endif()
 
 option(ENABLE_BENCHMARKS "Build code snippets benchmarks" OFF)
-if(CMAKE_VERSION VERSION_LESS 3.5.1)
+if(CMAKE_VERSION VERSION_LESS 3.5.1 OR
+    (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "10.99"))
     set(ENABLE_BENCHMARKS OFF)
 endif()
 
@@ -159,9 +159,9 @@ endif()
 set(VERSION_INFO_MAJOR_VERSION 0)
 set(VERSION_INFO_API_COMPAT 0)
 if(${THIS_IS_A_RELEASE})
-    set(VERSION_INFO_MINOR_VERSION 13)
+    set(VERSION_INFO_MINOR_VERSION 14)
 else()
-    set(VERSION_INFO_MINOR_VERSION 13.git-${GIT_BRANCH}-${GIT_COMMIT_HASH})
+    set(VERSION_INFO_MINOR_VERSION 14.git-${GIT_BRANCH}-${GIT_COMMIT_HASH})
 endif()
 
 set(VERSION ${VERSION_INFO_MAJOR_VERSION}.${VERSION_INFO_API_COMPAT}.${VERSION_INFO_MINOR_VERSION})
@@ -324,13 +324,13 @@ set(GNSSSDR_PROTOBUF_MIN_VERSION "3.0.0")
 ################################################################################
 set(GNSSSDR_GFLAGS_LOCAL_VERSION "2.2.2")
 set(GNSSSDR_GLOG_LOCAL_VERSION "0.4.0")
-set(GNSSSDR_ARMADILLO_LOCAL_VERSION "10.1.x")
+set(GNSSSDR_ARMADILLO_LOCAL_VERSION "10.3.x")
 set(GNSSSDR_GTEST_LOCAL_VERSION "1.10.0")
 set(GNSSSDR_GNSS_SIM_LOCAL_VERSION "master")
 set(GNSSSDR_GPSTK_LOCAL_VERSION "8.0.0")
-set(GNSSSDR_MATIO_LOCAL_VERSION "1.5.18")
-set(GNSSSDR_PUGIXML_LOCAL_VERSION "1.11")
-set(GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION "3.14.0")
+set(GNSSSDR_MATIO_LOCAL_VERSION "1.5.21")
+set(GNSSSDR_PUGIXML_LOCAL_VERSION "1.11.4")
+set(GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION "3.15.6")
 set(GNSSSDR_BENCHMARK_LOCAL_VERSION "1.5.2")
 set(GNSSSDR_MATHJAX_EXTERNAL_VERSION "2.7.7")
 
@@ -1104,11 +1104,17 @@ if(NOT VOLKGNSSSDR_FOUND)
     set(VOLK_GNSSSDR_CMAKE_ARGS ${VOLK_GNSSSDR_COMPILER}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install
         -DENABLE_STATIC_LIBS=ON
+        -DENABLE_OWN_CPUFEATURES=${ENABLE_OWN_CPUFEATURES}
         -DENABLE_PROFILING=${ENABLE_PROFILING}
         -DENABLE_ORC=${ORC_ENABLED}
         ${STRIP_VOLK_GNSSSDR_PROFILE}
         ${USE_THIS_PYTHON}
     )
+    if(CMAKE_VERSION VERSION_GREATER 3.18.99 AND CMAKE_GENERATOR STREQUAL Xcode)
+        if(XCODE_VERSION VERSION_GREATER 11)
+            set(VOLK_GNSSSDR_CMAKE_ARGS ${VOLK_GNSSSDR_CMAKE_ARGS} -T buildsystem=1)
+        endif()
+    endif()
     if(DEFINED ENV{OECORE_TARGET_SYSROOT})
         set(VOLK_GNSSSDR_CMAKE_ARGS ${VOLK_GNSSSDR_CMAKE_ARGS}
             -DCROSSCOMPILE_MULTILIB=TRUE
@@ -1158,6 +1164,33 @@ if(NOT VOLKGNSSSDR_FOUND)
         )
     else()
         if(SUPPORTED_CPU_FEATURES_ARCH)
+            set(VOLK_GNSSSDR_BUILD_BYPRODUCTS
+                ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/lib${VOLK_GNSSSDR_LIB_SUFFIX}/${CMAKE_FIND_LIBRARY_PREFIXES}volk_gnsssdr${CMAKE_STATIC_LIBRARY_SUFFIX}
+                ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/bin/volk_gnsssdr_profile
+            )
+            if(NOT ENABLE_OWN_CPUFEATURES)
+                find_package(CpuFeatures QUIET)
+                set_package_properties(CpuFeatures PROPERTIES
+                    URL "https://github.com/google/cpu_features"
+                    PURPOSE "Used by the volk_gnsssdr library."
+                    TYPE REQUIRED
+                )
+            endif()
+            if(CpuFeatures_FOUND)
+                message(STATUS "Found CpuFeatures: (found version ${CpuFeatures_VERSION})")
+                set_package_properties(CpuFeatures PROPERTIES
+                    DESCRIPTION "A cross platform C99 library to get CPU features at runtime (found: v${CpuFeatures_VERSION})"
+                )
+            else()
+                set_package_properties(CpuFeatures PROPERTIES
+                    DESCRIPTION "A cross platform C99 library to get CPU features at runtime"
+                    PURPOSE "CpuFeatures will be built when doing '${CMAKE_MAKE_PROGRAM_PRETTY_NAME}'."
+                )
+                set(VOLK_GNSSSDR_BUILD_BYPRODUCTS
+                    ${VOLK_GNSSSDR_BUILD_BYPRODUCTS}
+                    ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/${CMAKE_INSTALL_LIBDIR}/${CMAKE_FIND_LIBRARY_PREFIXES}cpu_features${CMAKE_STATIC_LIBRARY_SUFFIX}
+                )
+            endif()
             ExternalProject_Add(volk_gnsssdr_module
                 PREFIX ${CMAKE_BINARY_DIR}/volk_gnsssdr_module
                 SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/algorithms/libs/volk_gnsssdr_module/volk_gnsssdr
@@ -1169,9 +1202,7 @@ if(NOT VOLKGNSSSDR_FOUND)
                 UPDATE_COMMAND ""
                 PATCH_COMMAND ""
                 BUILD_COMMAND ${VOLK_GNSSSDR_BUILD_COMMAND} volk_gnsssdr_profile
-                BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/lib${VOLK_GNSSSDR_LIB_SUFFIX}/${CMAKE_FIND_LIBRARY_PREFIXES}volk_gnsssdr${CMAKE_STATIC_LIBRARY_SUFFIX}
-                    ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/bin/volk_gnsssdr_profile
-                    ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/${CMAKE_INSTALL_LIBDIR}/${CMAKE_FIND_LIBRARY_PREFIXES}cpu_features${CMAKE_STATIC_LIBRARY_SUFFIX}
+                BUILD_BYPRODUCTS ${VOLK_GNSSSDR_BUILD_BYPRODUCTS}
                 INSTALL_DIR ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install
             )
         else()
@@ -1202,6 +1233,9 @@ if(NOT VOLKGNSSSDR_FOUND)
     set_property(TARGET volk_gnsssdr PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/lib${VOLK_GNSSSDR_LIB_SUFFIX}/libvolk_gnsssdr${CMAKE_STATIC_LIBRARY_SUFFIX})
     set(VOLK_GNSSSDR_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/volk_gnsssdr_module/build/include/;${CMAKE_SOURCE_DIR}/src/algorithms/libs/volk_gnsssdr_module/volk_gnsssdr/include;${ORC_INCLUDE_DIRS}")
     set(VOLK_GNSSSDR_LIBRARIES volk_gnsssdr ${ORC_LIBRARIES_STATIC})
+    if(CpuFeatures_FOUND)
+        set(VOLK_GNSSSDR_LIBRARIES ${VOLK_GNSSSDR_LIBRARIES} CpuFeatures::cpu_features)
+    endif()
 
     if(NOT TARGET Volkgnsssdr::volkgnsssdr)
         file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/build/include)
@@ -1215,9 +1249,11 @@ if(NOT VOLKGNSSSDR_FOUND)
             INTERFACE_LINK_LIBRARIES "${VOLK_GNSSSDR_LIBRARIES}"
         )
         if(CMAKE_VERSION VERSION_GREATER 3.0 AND SUPPORTED_CPU_FEATURES_ARCH)
-            set_target_properties(Volkgnsssdr::volkgnsssdr PROPERTIES
-                INTERFACE_LINK_LIBRARIES ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/${CMAKE_INSTALL_LIBDIR}/${CMAKE_FIND_LIBRARY_PREFIXES}cpu_features${CMAKE_STATIC_LIBRARY_SUFFIX}
-            )
+            if(NOT CpuFeatures_FOUND)
+                set_target_properties(Volkgnsssdr::volkgnsssdr PROPERTIES
+                    INTERFACE_LINK_LIBRARIES ${CMAKE_BINARY_DIR}/volk_gnsssdr_module/install/${CMAKE_INSTALL_LIBDIR}/${CMAKE_FIND_LIBRARY_PREFIXES}cpu_features${CMAKE_STATIC_LIBRARY_SUFFIX}
+                )
+            endif()
         endif()
     endif()
 
@@ -1242,6 +1278,8 @@ if(NOT VOLKGNSSSDR_FOUND)
     set_package_properties(VOLKGNSSSDR PROPERTIES
         PURPOSE "volk_gnsssdr will be built when doing '${CMAKE_MAKE_PROGRAM_PRETTY_NAME}'."
     )
+else()
+    set(ENABLE_OWN_CPUFEATURES OFF)
 endif()
 
 
@@ -2392,7 +2430,7 @@ if((NOT Protobuf_FOUND) OR (NOT Protobuf_PROTOC_EXECUTABLE) OR (${Protobuf_VERSI
                 UPDATE_COMMAND ${CMAKE_BINARY_DIR}/thirdparty/protobuf/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/autogen.sh
                 CONFIGURE_COMMAND "${CMAKE_BINARY_DIR}/thirdparty/protobuf/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/configure --prefix=${CMAKE_BINARY_DIR}/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION} --host=$ENV{OECORE_TARGET_ARCH} --with-protoc=${PROTOC_EXECUTABLE}"
                 BUILD_COMMAND ${CMAKE_MAKE_PROGRAM}
-                INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+                INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} DESTDIR= install
                 BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}protobuf${CMAKE_STATIC_LIBRARY_SUFFIX}
                     ${CMAKE_BINARY_DIR}/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/bin/protoc
             )
@@ -2479,7 +2517,7 @@ if((NOT Protobuf_FOUND) OR (NOT Protobuf_PROTOC_EXECUTABLE) OR (${Protobuf_VERSI
                 UPDATE_COMMAND ${CMAKE_BINARY_DIR}/thirdparty/protobuf/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/autogen.sh
                 CONFIGURE_COMMAND ${CMAKE_BINARY_DIR}/thirdparty/protobuf/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/configure --prefix=${CMAKE_BINARY_DIR}/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}
                 BUILD_COMMAND ${PROTOBUF_MAKE_PROGRAM}
-                INSTALL_COMMAND ${PROTOBUF_MAKE_PROGRAM} install
+                INSTALL_COMMAND ${PROTOBUF_MAKE_PROGRAM} DESTDIR= install
             )
         else()
             if(CMAKE_MAKE_PROGRAM MATCHES "make")
@@ -2498,7 +2536,7 @@ if((NOT Protobuf_FOUND) OR (NOT Protobuf_PROTOC_EXECUTABLE) OR (${Protobuf_VERSI
                 UPDATE_COMMAND ${CMAKE_BINARY_DIR}/thirdparty/protobuf/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/autogen.sh
                 CONFIGURE_COMMAND ${CMAKE_BINARY_DIR}/thirdparty/protobuf/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/configure --prefix=${CMAKE_BINARY_DIR}/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}
                 BUILD_COMMAND ${PROTOBUF_MAKE_PROGRAM} ${PROTOBUF_PARALLEL_BUILD}
-                INSTALL_COMMAND ${PROTOBUF_MAKE_PROGRAM} install
+                INSTALL_COMMAND ${PROTOBUF_MAKE_PROGRAM} DESTDIR= install
                 BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}protobuf${CMAKE_STATIC_LIBRARY_SUFFIX}
                     ${CMAKE_BINARY_DIR}/protobuf-${GNSSSDR_PROTOCOLBUFFERS_LOCAL_VERSION}/bin/protoc
             )
@@ -3212,6 +3250,7 @@ add_feature_info(ENABLE_GNSS_SIM_INSTALL ENABLE_GNSS_SIM_INSTALL "Enables downlo
 add_feature_info(ENABLE_INSTALL_TESTS ENABLE_INSTALL_TESTS "Install test binaries when doing '${CMAKE_MAKE_PROGRAM_PRETTY_NAME} install'.")
 add_feature_info(ENABLE_BENCHMARKS ENABLE_BENCHMARKS "Enables building of code snippet benchmarks.")
 add_feature_info(ENABLE_EXTERNAL_MATHJAX ENABLE_EXTERNAL_MATHJAX "Use MathJax from an external CDN in HTML docs when doing '${CMAKE_MAKE_PROGRAM_PRETTY_NAME} doc'.")
+add_feature_info(ENABLE_OWN_CPUFEATURES ENABLE_OWN_CPUFEATURES "Force building own local version of the cpu_features library, even if it is already installed.")
 
 message(STATUS "")
 message(STATUS "***************************************")

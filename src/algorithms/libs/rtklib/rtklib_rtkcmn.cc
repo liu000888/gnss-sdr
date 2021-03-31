@@ -31,6 +31,7 @@
 
 #include "rtklib_rtkcmn.h"
 #include <glog/logging.h>
+#include <cassert>
 #include <cstring>
 #include <dirent.h>
 #include <iostream>
@@ -273,19 +274,19 @@ int satno(int sys, int prn)
                 }
             return NSATGPS + NSATGLO + NSATGAL + prn - MINPRNQZS + 1;
         case SYS_BDS:
-            if (prn < MINPRNBDS || MAXPRNBDS < prn)
+            if (MAXPRNBDS < prn)
                 {
                     return 0;
                 }
             return NSATGPS + NSATGLO + NSATGAL + NSATQZS + prn - MINPRNBDS + 1;
         case SYS_IRN:
-            if (prn < MINPRNIRN || MAXPRNIRN < prn)
+            if (MAXPRNIRN < prn)
                 {
                     return 0;
                 }
             return NSATGPS + NSATGLO + NSATGAL + NSATQZS + NSATBDS + prn - MINPRNIRN + 1;
         case SYS_LEO:
-            if (prn < MINPRNLEO || MAXPRNLEO < prn)
+            if (MAXPRNLEO < prn)
                 {
                     return 0;
                 }
@@ -442,6 +443,11 @@ int satid2no(const char *id)
         default:
             return 0;
         }
+    if (prn <= 0 || prn > MAXSAT)
+        {
+            return 0;
+        }
+
     return satno(sys, prn);
 }
 
@@ -1417,6 +1423,7 @@ void matfprint(const double A[], int n, int m, int p, int q, FILE *fp)
         }
 }
 
+
 void matsprint(const double A[], int n, int m, int p, int q, std::string &buffer)
 {
     int i;
@@ -1727,7 +1734,7 @@ double timediff(gtime_t t1, gtime_t t2)
  *-----------------------------------------------------------------------------*/
 double timediffweekcrossover(gtime_t t1, gtime_t t2)
 {
-    // as stated in IS-GPS-200K table 20-IV footnote among other parts of the ICD,
+    // as stated in IS-GPS-200L table 20-IV footnote among other parts of the ICD,
     // if tk=(t - toe) > 302400s then tk = tk - s
     // if tk=(t - toe) < -302400s then tk = tk + 604800s
     double tk = difftime(t1.time, t2.time) + t1.sec - t2.sec;
@@ -2689,6 +2696,20 @@ void addpcv(const pcv_t *pcv, pcvs_t *pcvs)
 }
 
 
+/* strncpy without truncation ------------------------------------------------*/
+char *strncpy_no_trunc(char *out, size_t outsz, const char *in, size_t insz)
+{
+    assert(outsz > 0);
+    while (--outsz > 0 && insz > 0 && *in)
+        {
+            *out++ = *in++;
+            insz--;
+        }
+    *out = 0;
+    return out;
+}
+
+
 /* read ngs antenna parameter file -------------------------------------------*/
 int readngspcv(const char *file, pcvs_t *pcvs)
 {
@@ -2718,7 +2739,7 @@ int readngspcv(const char *file, pcvs_t *pcvs)
             if (++n == 1)
                 {
                     pcv = pcv0;
-                    strncpy(pcv.type, buff, 61);
+                    strncpy_no_trunc(pcv.type, 61, buff, 256);
                     pcv.type[61] = '\0';
                 }
             else if (n == 2)
@@ -3309,8 +3330,8 @@ int geterp(const erp_t *erp, gtime_t time, double *erpv)
 /* compare ephemeris ---------------------------------------------------------*/
 int cmpeph(const void *p1, const void *p2)
 {
-    auto *q1 = static_cast<const eph_t *>(p1);
-    auto *q2 = static_cast<const eph_t *>(p2);
+    const auto *q1 = static_cast<const eph_t *>(p1);
+    const auto *q2 = static_cast<const eph_t *>(p2);
     return q1->ttr.time != q2->ttr.time ? static_cast<int>(q1->ttr.time - q2->ttr.time) : (q1->toe.time != q2->toe.time ? static_cast<int>(q1->toe.time - q2->toe.time) : q1->sat - q2->sat);
 }
 
@@ -3359,8 +3380,8 @@ void uniqeph(nav_t *nav)
 /* compare glonass ephemeris -------------------------------------------------*/
 int cmpgeph(const void *p1, const void *p2)
 {
-    auto *q1 = static_cast<const geph_t *>(p1);
-    auto *q2 = static_cast<const geph_t *>(p2);
+    const auto *q1 = static_cast<const geph_t *>(p1);
+    const auto *q2 = static_cast<const geph_t *>(p2);
     return q1->tof.time != q2->tof.time ? static_cast<int>(q1->tof.time - q2->tof.time) : (q1->toe.time != q2->toe.time ? static_cast<int>(q1->toe.time - q2->toe.time) : q1->sat - q2->sat);
 }
 
@@ -3410,8 +3431,8 @@ void uniqgeph(nav_t *nav)
 /* compare sbas ephemeris ----------------------------------------------------*/
 int cmpseph(const void *p1, const void *p2)
 {
-    auto *q1 = static_cast<const seph_t *>(p1);
-    auto *q2 = static_cast<const seph_t *>(p2);
+    const auto *q1 = static_cast<const seph_t *>(p1);
+    const auto *q2 = static_cast<const seph_t *>(p2);
     return q1->tof.time != q2->tof.time ? static_cast<int>(q1->tof.time - q2->tof.time) : (q1->t0.time != q2->t0.time ? static_cast<int>(q1->t0.time - q2->t0.time) : q1->sat - q2->sat);
 }
 
@@ -3488,8 +3509,8 @@ void uniqnav(nav_t *nav)
 /* compare observation data -------------------------------------------------*/
 int cmpobs(const void *p1, const void *p2)
 {
-    auto *q1 = static_cast<const obsd_t *>(p1);
-    auto *q2 = static_cast<const obsd_t *>(p2);
+    const auto *q1 = static_cast<const obsd_t *>(p1);
+    const auto *q2 = static_cast<const obsd_t *>(p2);
     double tt = timediff(q1->time, q2->time);
     if (fabs(tt) > DTTOL)
         {

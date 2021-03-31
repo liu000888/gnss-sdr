@@ -1,11 +1,9 @@
-# Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
+
 
 if(USE_CMAKE_TARGET_SOURCES)
     add_library(obs_gr_blocks STATIC)
@@ -18,16 +16,6 @@ if(USE_CMAKE_TARGET_SOURCES)
 else()
     source_group(Headers FILES hybrid_observables_gs.h)
     add_library(obs_gr_blocks hybrid_observables_gs.cc hybrid_observables_gs.h)
-endif()
-
-if(${FILESYSTEM_FOUND})
-    target_compile_definitions(obs_gr_blocks PRIVATE -DHAS_STD_FILESYSTEM=1)
-    if(${find_experimental})
-        target_compile_definitions(obs_gr_blocks PRIVATE -DHAS_STD_FILESYSTEM_EXPERIMENTAL=1)
-    endif()
-    target_link_libraries(obs_gr_blocks PRIVATE std::filesystem)
-else()
-    target_link_libraries(obs_gr_blocks PRIVATE Boost::filesystem)
 endif()
 
 target_include_directories(obs_gr_blocks

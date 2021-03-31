@@ -4,11 +4,74 @@ SPDX-License-Identifier: GPL-3.0-or-later
 )
 
 [comment]: # (
-SPDX-FileCopyrightText: 2011-2020 Carles Fernandez-Prades <carles.fernandez@cttc.es>
+SPDX-FileCopyrightText: 2011-2021 Carles Fernandez-Prades <carles.fernandez@cttc.es>
 )
 <!-- prettier-ignore-end -->
 
 ## [Unreleased](https://github.com/gnss-sdr/gnss-sdr/tree/next)
+
+### Improvements in Portability:
+
+- Avoid collision of the `cpu_features` library when installing the
+  `volk_gnsssdr` library by its own, and VOLK has already installed its version.
+  Added a new building option `ENABLE_OWN_CPUFEATURES`, defaulting to `ON` when
+  building `gnss-sdr` but defaulting to `OFF` when building a stand-alone
+  version of `volk_gnsssdr`. When this building option is set to `ON`, it forces
+  the building of the local version of the cpu_features library, regardless of
+  whether it is already installed or not.
+- Fix building when using the Xcode generator, Xcode >= 12 and CMake >= 3.19.
+- Fix building of FPGA blocks when linking against GNU Radio >= 3.9 and/or
+  Boost >= 1.74.
+- Fix linking of the `<filesystem>` library when using GCC 8.x and GNU Radio >=
+  3.8.
+
+### Improvements in Maintainability:
+
+- The Contributor License Agreement (CLA) signing for new contributors has been
+  replaced by a
+  [Developer's Certificate of Origin (DCO)](https://github.com/gnss-sdr/gnss-sdr/blob/next/.github/DCO.txt),
+  which implies that contributed commits in a pull request need to be signed as
+  a manifestation that contributors have the right to submit their work under
+  the open source license indicated in the contributed file(s) (instead of
+  asking them to sign the CLA document).
+- Improved handling of change in GNU Radio 3.9 FFT API.
+- Improved handling of the filesystem library.
+- Added an abstract class `SignalSourceInterface` and a common base class
+  `SignalSourceBase`, which allow to remove a lot of duplicated code in Signal
+  Source blocks, and further abstract file-based interfaces behind them.
+- Do not apply clang-tidy fixes to protobuf-generated headers.
+- Refactored private implementation of flow graph connection and disconnection
+  for improved source code readability.
+- Added a base class for GNSS ephemeris, saving some duplicated code and
+  providing a common nomenclature for ephemeris' parameters. New generated XML
+  files make use of the new parameters' name.
+
+### Improvements in Usability:
+
+- Avoid segmentation faults in the flow graph connection and/or starting due to
+  some common inconsistencies in the configuration file.
+- Provide hints to the user in case of failed flow graph connection due to
+  inconsistencies in the configuration file.
+- Fix segmentation fault if the RINEX output was disabled.
+- Added a feature that optionally enables the remote monitoring of GPS and
+  Galileo ephemeris using UDP and
+  [Protocol Buffers](https://developers.google.com/protocol-buffers).
+- Now building the software passing the `-DENABLE_FPGA=ON` to CMake does not
+  make the receiver unusable when running on non-FPGA-enabled platforms. On
+  FPGA-enabled platforms, now it is possible to run non-FPGA-enabled
+  configurations.
+- Fix bug that made the Monitor block to always set to 0 the
+  `carrier_phase_rads` parameter value.
+- The `Labsat_Signal_Source` implementation of the `SignalSource` block now can
+  read files in the LabSat 3 Wideband format (`.LS3W`). When using this format,
+  this source block can provide multiple RF chain outputs.
+- Replace `Receiver.sources_count` configuration parameter name by
+  `GNSS-SDR.num_sources`. The former parameter name is still read to ensure
+  backward compatibility with configuration files using that nomenclature.
+
+&nbsp;
+
+## [GNSS-SDR v0.0.14](https://github.com/gnss-sdr/gnss-sdr/releases/tag/v0.0.14)
 
 ### Improvements in Availability:
 
@@ -36,7 +99,17 @@ SPDX-FileCopyrightText: 2011-2020 Carles Fernandez-Prades <carles.fernandez@cttc
 - Added a common shared pointer definition `gnss_shared_ptr`, which allows to
   handle the `boost::shared_ptr` to `std::shared_ptr` transition in GNU Radio
   3.9 API more nicely.
-- Support new FFT blocks' templated API in GNU Radio 3.9.
+- Support new FFT and firdes blocks' API in GNU Radio 3.9.
+- Added detection of inconsistent function prototypes in `volk_gnsssdr` library
+  kernels at compile time.
+- Fixed defects detected by clang-tidy check `bugprone-reserved-identifier`, and
+  added to the checks list. This check corresponds to CERT C Coding Standard
+  rule
+  [DCL37-C](https://wiki.sei.cmu.edu/confluence/display/c/DCL37-C.+Do+not+declare+or+define+a+reserved+identifier)
+  as well as its C++ counterpart,
+  [DCL51-CPP](https://wiki.sei.cmu.edu/confluence/display/cplusplus/DCL51-CPP.+Do+not+declare+or+define+a+reserved+identifier).
+- Applied and added more clang-tidy checks related to readability:
+  `readability-make-member-function-const` and `readability-qualified-auto`.
 
 ### Improvements in Portability:
 
@@ -59,8 +132,15 @@ SPDX-FileCopyrightText: 2011-2020 Carles Fernandez-Prades <carles.fernandez@cttc
   everything is managed by the CMake scripts.
 - The `volk_gnsssdr` library can be built on Microsoft Windows and can execute
   SIMD instructions on that OS.
+- Removed all instances of `_mm256_zeroupper()` in the `volk_gnsssdr` library,
+  since they are not required and lead to miscompilation with GCC 10.2 and
+  optimization level `-O3`.
 - Fixed building with `-DENABLE_CUDA=ON` for blocks implemented with CUDA.
 - Fixed linking against the ORC library if it is present in the system.
+- Fixed a bug introduced in v0.0.13 that prevented getting Galileo-only PVT
+  fixes in some environments.
+- Fixed duplication of protobuf build tree if it was locally built and then
+  installed with DESTDIR variable set.
 
 ### Improvements in Usability:
 

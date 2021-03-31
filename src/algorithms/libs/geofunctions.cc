@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -23,7 +20,7 @@
 #include <array>
 #include <cmath>  // for sin, cos, sqrt, abs, pow
 
-const double STRP_PI = 3.1415926535898;  // Pi as defined in IS-GPS-200K
+const double STRP_PI = 3.1415926535898;  // Pi as defined in IS-GPS-200L
 
 arma::mat Skew_symmetric(const arma::vec &a)
 {

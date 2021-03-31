@@ -11,17 +11,15 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
  */
+
 #include "dll_pll_veml_tracking_fpga.h"
 #include "GPS_L1_CA.h"
 #include "GPS_L2C.h"
@@ -32,6 +30,7 @@
 #include "fpga_multicorrelator.h"
 #include "gnss_satellite.h"
 #include "gnss_sdr_create_directory.h"
+#include "gnss_sdr_filesystem.h"
 #include "gnss_synchro.h"
 #include "gps_sdr_signal_replica.h"
 #include "lock_detectors.h"
@@ -55,18 +54,6 @@
 #include <boost/bind/bind.hpp>
 #endif
 
-#if HAS_STD_FILESYSTEM
-#if HAS_STD_FILESYSTEM_EXPERIMENTAL
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
-#include <filesystem>
-namespace fs = std::filesystem;
-#endif
-#else
-#include <boost/filesystem/path.hpp>
-namespace fs = boost::filesystem;
-#endif
 
 dll_pll_veml_tracking_fpga_sptr dll_pll_veml_make_tracking_fpga(const Dll_Pll_Conf_Fpga &conf_)
 {
@@ -1310,7 +1297,7 @@ int32_t dll_pll_veml_tracking_fpga::save_matfile() const
 }
 
 
-void dll_pll_veml_tracking_fpga::set_channel(uint32_t channel, std::string device_io_name)
+void dll_pll_veml_tracking_fpga::set_channel(uint32_t channel, const std::string &device_io_name)
 {
     gr::thread::scoped_lock l(d_setlock);
 

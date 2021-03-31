@@ -9,13 +9,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -26,6 +23,7 @@
 #include "concurrent_queue.h"
 #include "fpga_switch.h"
 #include "gnss_block_interface.h"
+#include "gnss_sdr_filesystem.h"
 #include "gnss_synchro.h"
 #include "gps_l1_ca_pcps_acquisition_fpga.h"
 #include "in_memory_configuration.h"
@@ -45,18 +43,6 @@
 #include <gnuradio/analog/sig_source_c.h>
 #endif
 
-#if HAS_STD_FILESYSTEM
-#if HAS_STD_FILESYSTEM_EXPERIMENTAL
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
-#include <filesystem>
-namespace fs = std::filesystem;
-#endif
-#else
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
-#endif
 
 struct DMA_handler_args_gps_l1_acq_test
 {

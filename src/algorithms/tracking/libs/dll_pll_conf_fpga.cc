@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -74,7 +71,7 @@ Dll_Pll_Conf_Fpga::Dll_Pll_Conf_Fpga()
     signal[0] = '1';
     signal[1] = 'C';
     signal[2] = '\0';
-    device_name = "/dev/uio";
+    device_name = std::string("/dev/uio");
     code_length_chips = 0U;
     code_samples_per_chip = 0U;
     ca_codes = nullptr;

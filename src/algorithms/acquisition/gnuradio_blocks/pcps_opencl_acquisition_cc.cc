@@ -25,13 +25,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -39,7 +36,6 @@
 
 #include "pcps_opencl_acquisition_cc.h"
 #include "MATH_CONSTANTS.h"  // TWO_PI
-#include "gnss_sdr_make_unique.h"
 #include "opencl/fft_base_kernels.h"
 #include "opencl/fft_internal.h"
 #include <glog/logging.h>
@@ -115,10 +111,10 @@ pcps_opencl_acquisition_cc::pcps_opencl_acquisition_cc(
     if (d_opencl != 0)
         {
             // Direct FFT
-            d_fft_if = std::make_unique<gr::fft::fft_complex>(d_fft_size, true);
+            d_fft_if = gnss_fft_fwd_make_unique(d_fft_size);
 
             // Inverse FFT
-            d_ifft = std::make_unique<gr::fft::fft_complex>(d_fft_size, false);
+            d_ifft = gnss_fft_rev_make_unique(d_fft_size);
         }
 
     // For dumping samples into a file

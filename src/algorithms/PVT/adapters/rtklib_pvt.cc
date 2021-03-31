@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -806,6 +803,11 @@ Rtklib_Pvt::Rtklib_Pvt(const ConfigurationInterface* configuration,
         {
             pvt_output_parameters.protobuf_enabled = true;
         }
+
+    // Read EPHEMERIS MONITOR Configuration
+    pvt_output_parameters.monitor_ephemeris_enabled = configuration->property(role + ".enable_monitor_ephemeris", false);
+    pvt_output_parameters.udp_eph_addresses = configuration->property(role + ".monitor_ephemeris_client_addresses", std::string("127.0.0.1"));
+    pvt_output_parameters.udp_eph_port = configuration->property(role + ".monitor_ephemeris_udp_port", 1234);
 
     // Show time in local zone
     pvt_output_parameters.show_local_time_zone = configuration->property(role + ".show_local_time_zone", false);

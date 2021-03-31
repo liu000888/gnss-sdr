@@ -10,13 +10,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -27,17 +24,8 @@
 #include "MATH_CONSTANTS.h"    // for TWO_PI
 #include "gnss_frequencies.h"
 #include "gnss_sdr_create_directory.h"
-#include "gnss_sdr_make_unique.h"
+#include "gnss_sdr_filesystem.h"
 #include "gnss_synchro.h"
-#if HAS_STD_FILESYSTEM
-#if HAS_STD_FILESYSTEM_EXPERIMENTAL
-#include <experimental/filesystem>
-#else
-#include <filesystem>
-#endif
-#else
-#include <boost/filesystem/path.hpp>
-#endif
 #include <boost/math/special_functions/gamma.hpp>
 #include <gnuradio/io_signature.h>
 #include <matio.h>
@@ -51,16 +39,6 @@
 #include <cstring>  // for memcpy
 #include <iostream>
 #include <map>
-
-#if HAS_STD_FILESYSTEM
-#if HAS_STD_FILESYSTEM_EXPERIMENTAL
-namespace fs = std::experimental::filesystem;
-#else
-namespace fs = std::filesystem;
-#endif
-#else
-namespace fs = boost::filesystem;
-#endif
 
 
 pcps_acquisition_sptr pcps_make_acquisition(const Acq_Conf& conf_)
@@ -129,18 +107,8 @@ pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_) : gr::block("pcps_acqu
     d_tmp_buffer = volk_gnsssdr::vector<float>(d_fft_size);
     d_fft_codes = volk_gnsssdr::vector<std::complex<float>>(d_fft_size);
     d_input_signal = volk_gnsssdr::vector<std::complex<float>>(d_fft_size);
-
-#if GNURADIO_FFT_USES_TEMPLATES
-    // Direct FFT
-    d_fft_if = std::make_unique<gr::fft::fft_complex_fwd>(d_fft_size);
-    // Inverse FFT
-    d_ifft = std::make_unique<gr::fft::fft_complex_rev>(d_fft_size);
-#else
-    // Direct FFT
-    d_fft_if = std::make_unique<gr::fft::fft_complex>(d_fft_size, true);
-    // Inverse FFT
-    d_ifft = std::make_unique<gr::fft::fft_complex>(d_fft_size, false);
-#endif
+    d_fft_if = gnss_fft_fwd_make_unique(d_fft_size);
+    d_ifft = gnss_fft_rev_make_unique(d_fft_size);
 
     d_gnss_synchro = nullptr;
     d_worker_active = false;
@@ -259,7 +227,7 @@ bool pcps_acquisition::is_fdma()
 }
 
 
-void pcps_acquisition::update_local_carrier(own::span<gr_complex> carrier_vector, float freq)
+void pcps_acquisition::update_local_carrier(own::span<gr_complex> carrier_vector, float freq) const
 {
     float phase_step_rad;
     if (d_acq_parameters.use_automatic_resampler)
@@ -663,6 +631,7 @@ void pcps_acquisition::acquisition_core(uint64_t samp_count)
         {
             lk.unlock();
         }
+
     // Doppler frequency grid loop
     if (!d_step_two)
         {
@@ -878,6 +847,7 @@ void pcps_acquisition::acquisition_core(uint64_t samp_count)
                     send_negative_acquisition();
                 }
         }
+    d_worker_active = false;
 
     if ((d_num_noncoherent_integrations_counter == d_acq_parameters.max_dwells) or (d_positive_acq == 1))
         {
@@ -889,8 +859,6 @@ void pcps_acquisition::acquisition_core(uint64_t samp_count)
             d_num_noncoherent_integrations_counter = 0U;
             d_positive_acq = 0;
         }
-
-    d_worker_active = false;
 }
 
 
@@ -937,7 +905,6 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
      * 6. Declare positive or negative acquisition using a message port
      */
     gr::thread::scoped_lock lk(d_setlock);
-
     if (!d_active or d_worker_active)
         {
             if (!d_acq_parameters.blocking_on_standby)
@@ -1024,8 +991,7 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                     }
                 else
                     {
-                        d_worker = std::thread([&] { pcps_acquisition::acquisition_core(d_sample_counter); });
-                        d_worker.detach();
+                        gr::thread::thread d_worker(&pcps_acquisition::acquisition_core, this, d_sample_counter);
                         d_worker_active = true;
                     }
                 consume_each(0);

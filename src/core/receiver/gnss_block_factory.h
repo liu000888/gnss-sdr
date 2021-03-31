@@ -12,13 +12,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -41,6 +38,7 @@
 
 class ConfigurationInterface;
 class GNSSBlockInterface;
+class SignalSourceInterface;
 class AcquisitionInterface;
 class TrackingInterface;
 class TelemetryDecoderInterface;
@@ -54,7 +52,7 @@ public:
     GNSSBlockFactory() = default;
     ~GNSSBlockFactory() = default;
 
-    std::unique_ptr<GNSSBlockInterface> GetSignalSource(const ConfigurationInterface* configuration,
+    std::unique_ptr<SignalSourceInterface> GetSignalSource(const ConfigurationInterface* configuration,
         Concurrent_Queue<pmt::pmt_t>* queue, int ID = -1);
 
     std::unique_ptr<GNSSBlockInterface> GetSignalConditioner(const ConfigurationInterface* configuration, int ID = -1);

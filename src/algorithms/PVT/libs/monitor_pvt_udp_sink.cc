@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -62,7 +59,10 @@ bool Monitor_Pvt_Udp_Sink::write_monitor_pvt(const Monitor_Pvt* const monitor_pv
 
             try
                 {
-                    socket.send(boost::asio::buffer(outbound_data));
+                    if (socket.send(boost::asio::buffer(outbound_data)) == 0)
+                        {
+                            return false;
+                        }
                 }
             catch (boost::system::system_error const& e)
                 {

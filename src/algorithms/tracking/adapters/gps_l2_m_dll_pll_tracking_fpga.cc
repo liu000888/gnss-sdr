@@ -11,13 +11,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -68,7 +65,7 @@ GpsL2MDllPllTrackingFpga::GpsL2MDllPllTrackingFpga(
     std::memcpy(trk_params_fpga.signal, sig_.data(), 3);
 
     // UIO device file
-    device_name = configuration->property(role + ".devicename", default_device_name);
+    device_name = configuration->property(role + ".devicename", default_device_name_GPS_L2);
 
     // compute the number of tracking channels that have already been instantiated. The order in which
     // GNSS-SDR instantiates the tracking channels i L1, L2, L5, E1, E5a

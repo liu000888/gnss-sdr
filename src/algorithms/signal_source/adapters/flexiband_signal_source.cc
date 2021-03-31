@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -21,17 +18,21 @@
 
 #include "flexiband_signal_source.h"
 #include "configuration_interface.h"
+#include "gnss_sdr_string_literals.h"
 #include <glog/logging.h>
 #include <gnuradio/blocks/file_sink.h>
 #include <teleorbit/frontend.h>
 #include <utility>
+
+using namespace std::string_literals;
 
 
 FlexibandSignalSource::FlexibandSignalSource(const ConfigurationInterface* configuration,
     const std::string& role,
     unsigned int in_stream,
     unsigned int out_stream,
-    Concurrent_Queue<pmt::pmt_t>* queue __attribute__((unused))) : role_(role), in_stream_(in_stream), out_stream_(out_stream)
+    Concurrent_Queue<pmt::pmt_t>* queue __attribute__((unused)))
+    : SignalSourceBase(configuration, role, "Flexiband_Signal_Source"s), in_stream_(in_stream), out_stream_(out_stream)
 {
     const std::string default_item_type("byte");
     item_type_ = configuration->property(role + ".item_type", default_item_type);

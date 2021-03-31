@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -31,6 +28,7 @@
 #include "galileo_e5a_pcps_acquisition.h"
 #include "gnss_block_factory.h"
 #include "gnss_block_interface.h"
+#include "gnss_sdr_filesystem.h"
 #include "gnss_sdr_valve.h"
 #include "gnuplot_i.h"
 #include "gps_l1_ca_pcps_acquisition.h"
@@ -68,19 +66,6 @@
 #include <gnuradio/filter/fir_filter_blk.h>
 #else
 #include <gnuradio/filter/fir_filter_ccf.h>
-#endif
-
-#if HAS_STD_FILESYSTEM
-#if HAS_STD_FILESYSTEM_EXPERIMENTAL
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
-#include <filesystem>
-namespace fs = std::filesystem;
-#endif
-#else
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
 #endif
 
 
@@ -558,8 +543,7 @@ bool TrackingPullInTest::acquire_signal(int SV_ID)
                             taps = gr::filter::firdes::low_pass(1.0,
                                 baseband_sampling_freq,
                                 acq_fs / 2.1,
-                                acq_fs / 10,
-                                gr::filter::firdes::win_type::WIN_HAMMING);
+                                acq_fs / 10);
                             std::cout << "Enabled decimation low pass filter with " << taps.size() << " taps and decimation factor of " << decimation << '\n';
                             acquisition->set_resampler_latency((taps.size() - 1) / 2);
                             gr::basic_block_sptr fir_filter_ccf_ = gr::filter::fir_filter_ccf::make(decimation, taps);

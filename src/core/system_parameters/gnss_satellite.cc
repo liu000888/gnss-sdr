@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -314,7 +311,7 @@ std::string Gnss_Satellite::what_block(const std::string& system_, uint32_t PRN_
                 case 7:
                     block_ = std::string("IIR-M");  // Plane A
                     break;
-                case 8:
+                case 8:                           // NOLINT(bugprone-branch-clone)
                     block_ = std::string("IIF");  // Plane C
                     break;
                 case 9:
@@ -347,7 +344,7 @@ std::string Gnss_Satellite::what_block(const std::string& system_, uint32_t PRN_
                 case 18:
                     block_ = std::string("III");  // Plane D
                     break;
-                case 19:
+                case 19:                          // NOLINT(bugprone-branch-clone)
                     block_ = std::string("IIR");  // Plane D
                     break;
                 case 20:
@@ -362,7 +359,7 @@ std::string Gnss_Satellite::what_block(const std::string& system_, uint32_t PRN_
                 case 23:
                     block_ = std::string("III");  // Plane E
                     break;
-                case 24:
+                case 24:                          // NOLINT(bugprone-branch-clone)
                     block_ = std::string("IIF");  // Plane A
                     break;
                 case 25:
@@ -510,7 +507,7 @@ std::string Gnss_Satellite::what_block(const std::string& system_, uint32_t PRN_
                 case 123:
                     block_ = std::string("EGNOS");  // EGNOS Operational Platform. Astra 5B
                     break;
-                case 131:
+                case 131:                          // NOLINT(bugprone-branch-clone)
                     block_ = std::string("WAAS");  // WAAS Eutelsat 117 West B
                     break;
                 case 135:

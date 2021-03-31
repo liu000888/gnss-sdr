@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -33,7 +30,7 @@
 
 
 // CNAV GPS NAVIGATION MESSAGE STRUCTURE
-// NAVIGATION MESSAGE FIELDS POSITIONS (from IS-GPS-200K Appendix III)
+// NAVIGATION MESSAGE FIELDS POSITIONS (from IS-GPS-200L Appendix III)
 
 constexpr int32_t GPS_CNAV_DATA_PAGE_BITS = 300;
 
@@ -162,6 +159,8 @@ constexpr int32_t CNAV_DN_LSB = 1;
 const std::vector<std::pair<int32_t, int32_t> > CNAV_DELTA_TLSF({{218, 8}});
 constexpr int32_t CNAV_DELTA_TLSF_LSB = 1;
 
+constexpr double CNAV_A_REF = 26559710.0;       // See IS-GPS-200L,  pp. 161
+constexpr double CNAV_OMEGA_DOT_REF = -2.6e-9;  // semicircles / s, see IS-GPS-200L pp. 160
 
 // TODO: Add more frames (Almanac, etc...)
 

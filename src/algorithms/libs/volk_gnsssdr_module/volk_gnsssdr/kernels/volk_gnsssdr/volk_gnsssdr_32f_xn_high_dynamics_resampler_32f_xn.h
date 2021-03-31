@@ -14,13 +14,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -494,8 +491,6 @@ static inline void volk_gnsssdr_32f_xn_high_dynamics_resampler_32f_xn_a_avx(floa
             indexn = _mm256_add_ps(indexn, eights);
         }
 
-    _mm256_zeroupper();
-
     for (n = avx_iters * 8; n < num_points; n++)
         {
             // resample code for first tap
@@ -581,8 +576,6 @@ static inline void volk_gnsssdr_32f_xn_high_dynamics_resampler_32f_xn_u_avx(floa
                 }
             indexn = _mm256_add_ps(indexn, eights);
         }
-
-    _mm256_zeroupper();
 
     for (n = avx_iters * 8; n < num_points; n++)
         {

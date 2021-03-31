@@ -38,7 +38,7 @@ INIReader::INIReader(const std::string& filename)
 }
 
 
-int INIReader::ParseError()
+int INIReader::ParseError() const
 {
     return _error;
 }
@@ -80,4 +80,24 @@ int INIReader::ValueHandler(void* user, const char* section, const char* name,
     auto* reader = static_cast<INIReader*>(user);
     reader->_values[MakeKey(section, name)] = value;
     return 1;
+}
+
+
+bool INIReader::HasSection(const std::string& section) const
+{
+    const std::string key = MakeKey(section, "");
+    auto pos = _values.lower_bound(key);
+    if (pos == _values.end())
+        {
+            return false;
+        }
+    // Does the key at the lower_bound pos start with "section"?
+    return pos->first.compare(0, key.length(), key) == 0;
+}
+
+
+bool INIReader::HasValue(const std::string& section, const std::string& name) const
+{
+    std::string key = MakeKey(section, name);
+    return _values.count(key);
 }

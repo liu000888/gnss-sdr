@@ -12,13 +12,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -26,7 +23,6 @@
 
 #include "galileo_e5a_noncoherent_iq_acquisition_caf_cc.h"
 #include "MATH_CONSTANTS.h"
-#include "gnss_sdr_make_unique.h"
 #include <glog/logging.h>
 #include <gnuradio/io_signature.h>
 #include <volk/volk.h>
@@ -122,18 +118,9 @@ galileo_e5a_noncoherentIQ_acquisition_caf_cc::galileo_e5a_noncoherentIQ_acquisit
                 }
         }
 
-#if GNURADIO_FFT_USES_TEMPLATES
-    // Direct FFT
-    d_fft_if = std::make_unique<gr::fft::fft_complex_fwd>(d_fft_size);
-    // Inverse FFT
-    d_ifft = std::make_unique<gr::fft::fft_complex_rev>(d_fft_size);
-#else
-    // Direct FFT
-    d_fft_if = std::make_unique<gr::fft::fft_complex>(d_fft_size, true);
-    // Inverse FFT
-    d_ifft = std::make_unique<gr::fft::fft_complex>(d_fft_size, false);
-#endif
-    // For dumping samples into a file
+    d_fft_if = gnss_fft_fwd_make_unique(d_fft_size);
+    d_ifft = gnss_fft_rev_make_unique(d_fft_size);
+
     d_dump = dump;
     d_dump_filename = dump_filename;
 

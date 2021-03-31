@@ -8,13 +8,10 @@
  * This class represent a fmcomms2 signal source. It use the gr_iio block
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -23,7 +20,7 @@
 #ifndef GNSS_SDR_FMCOMMS2_SIGNAL_SOURCE_H
 #define GNSS_SDR_FMCOMMS2_SIGNAL_SOURCE_H
 
-#include "gnss_block_interface.h"
+#include "signal_source_base.h"
 #include <gnuradio/blocks/file_sink.h>
 #if GRIIO_INCLUDE_HAS_GNURADIO
 #include <gnuradio/iio/fmcomms2_source.h>
@@ -44,7 +41,7 @@
 
 class ConfigurationInterface;
 
-class Fmcomms2SignalSource : public GNSSBlockInterface
+class Fmcomms2SignalSource : public SignalSourceBase
 {
 public:
     Fmcomms2SignalSource(const ConfigurationInterface* configuration,
@@ -52,19 +49,6 @@ public:
         unsigned int out_stream, Concurrent_Queue<pmt::pmt_t>* queue);
 
     ~Fmcomms2SignalSource();
-
-    inline std::string role() override
-    {
-        return role_;
-    }
-
-    /*!
-     * \brief Returns "Fmcomms2_Signal_Source"
-     */
-    inline std::string implementation() override
-    {
-        return "Fmcomms2_Signal_Source";
-    }
 
     inline size_t item_size() override
     {
@@ -81,7 +65,6 @@ private:
     gnss_shared_ptr<gr::block> valve_;
     gr::blocks::file_sink::sptr file_sink_;
 
-    std::string role_;
     std::string item_type_;
     std::string dump_filename_;
 

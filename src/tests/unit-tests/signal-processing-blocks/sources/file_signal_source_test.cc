@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -56,5 +53,9 @@ TEST(FileSignalSource, InstantiateFileNotExists)
     config->set_property("Test.item_type", "gr_complex");
     config->set_property("Test.repeat", "false");
 
-    EXPECT_THROW({ auto uptr = std::make_shared<FileSignalSource>(config.get(), "Test", 0, 1, queue.get()); }, std::exception);
+    // the file existence test was moved from the ctor to the connect() call. The argument to
+    // connect doesn't matter, since the exception should be thrown sooner than any connections
+    auto top = gr::make_top_block("GNSSUnitTest");
+    auto uptr = std::make_shared<FileSignalSource>(config.get(), "Test", 0, 1, queue.get());
+    EXPECT_THROW({ uptr->connect(top); }, std::exception);
 }

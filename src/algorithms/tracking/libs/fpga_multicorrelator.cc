@@ -11,13 +11,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -195,7 +192,7 @@ bool Fpga_Multicorrelator_8sc::free()
 }
 
 
-void Fpga_Multicorrelator_8sc::open_channel(std::string device_io_name, uint32_t channel)
+void Fpga_Multicorrelator_8sc::open_channel(const std::string &device_io_name, uint32_t channel)
 {
     std::cout << "trk device_io_name = " << device_io_name << '\n';
 

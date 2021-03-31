@@ -7,13 +7,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -22,7 +19,6 @@
 #include "pcps_assisted_acquisition_cc.h"
 #include "MATH_CONSTANTS.h"
 #include "concurrent_map.h"
-#include "gnss_sdr_make_unique.h"
 #include "gps_acq_assist.h"
 #include <glog/logging.h>
 #include <gnuradio/io_signature.h>
@@ -72,17 +68,8 @@ pcps_assisted_acquisition_cc::pcps_assisted_acquisition_cc(
     d_disable_assist = false;
     d_fft_codes.reserve(d_fft_size);
 
-#if GNURADIO_FFT_USES_TEMPLATES
-    // Direct FFT
-    d_fft_if = std::make_unique<gr::fft::fft_complex_fwd>(d_fft_size);
-    // Inverse FFT
-    d_ifft = std::make_unique<gr::fft::fft_complex_rev>(d_fft_size);
-#else
-    // Direct FFT
-    d_fft_if = std::make_unique<gr::fft::fft_complex>(d_fft_size, true);
-    // Inverse FFT
-    d_ifft = std::make_unique<gr::fft::fft_complex>(d_fft_size, false);
-#endif
+    d_fft_if = gnss_fft_fwd_make_unique(d_fft_size);
+    d_ifft = gnss_fft_rev_make_unique(d_fft_size);
 
     // For dumping samples into a file
     d_dump = dump;
@@ -175,13 +162,13 @@ void pcps_assisted_acquisition_cc::get_assistance()
             // TODO: use the LO tolerance here
             if (gps_acq_assisistance.dopplerUncertainty >= 1000)
                 {
-                    d_doppler_max = gps_acq_assisistance.d_Doppler0 + gps_acq_assisistance.dopplerUncertainty * 2;
-                    d_doppler_min = gps_acq_assisistance.d_Doppler0 - gps_acq_assisistance.dopplerUncertainty * 2;
+                    d_doppler_max = gps_acq_assisistance.Doppler0 + gps_acq_assisistance.dopplerUncertainty * 2;
+                    d_doppler_min = gps_acq_assisistance.Doppler0 - gps_acq_assisistance.dopplerUncertainty * 2;
                 }
             else
                 {
-                    d_doppler_max = gps_acq_assisistance.d_Doppler0 + 1000;
-                    d_doppler_min = gps_acq_assisistance.d_Doppler0 - 1000;
+                    d_doppler_max = gps_acq_assisistance.Doppler0 + 1000;
+                    d_doppler_min = gps_acq_assisistance.Doppler0 - 1000;
                 }
             this->d_disable_assist = false;
             std::cout << "Acq assist ENABLED for GPS SV " << this->d_gnss_synchro->PRN << " (Doppler max,Doppler min)=("
@@ -286,7 +273,7 @@ float pcps_assisted_acquisition_cc::search_maximum()
 }
 
 
-float pcps_assisted_acquisition_cc::estimate_input_power(gr_vector_const_void_star &input_items)
+float pcps_assisted_acquisition_cc::estimate_input_power(gr_vector_const_void_star &input_items) const
 {
     const auto *in = reinterpret_cast<const gr_complex *>(input_items[0]);  // Get the input samples pointer
     // 1- Compute the input signal power estimation

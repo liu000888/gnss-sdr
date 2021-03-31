@@ -5,13 +5,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -20,14 +17,18 @@
 #include "raw_array_signal_source.h"
 #include "concurrent_queue.h"
 #include "configuration_interface.h"
+#include "gnss_sdr_string_literals.h"
 #include <glog/logging.h>
 #include <gnuradio/blocks/file_sink.h>
 #include <pmt/pmt.h>
 #include <dbfcttc/raw_array.h>
 
 
+using namespace std::string_literals;
+
 RawArraySignalSource::RawArraySignalSource(const ConfigurationInterface* configuration,
-    std::string role, unsigned int in_stream, unsigned int out_stream, Concurrent_Queue<pmt::pmt_t>* queue) : role_(role), in_stream_(in_stream), out_stream_(out_stream)
+    std::string role, unsigned int in_stream, unsigned int out_stream, Concurrent_Queue<pmt::pmt_t>* queue)
+    : SignalSourceBase(configuration, role, "Raw_Array_Signal_Source"s), in_stream_(in_stream), out_stream_(out_stream)
 {
     const std::string default_item_type("gr_complex");
     const std::string default_dump_file("./data/raw_array_source.dat");

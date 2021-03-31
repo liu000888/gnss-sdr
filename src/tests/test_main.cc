@@ -6,13 +6,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020 (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- * Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -129,6 +126,7 @@ DECLARE_string(log_dir);
 #include "unit-tests/signal-processing-blocks/pvt/rtcm_test.cc"
 #include "unit-tests/signal-processing-blocks/pvt/serdes_monitor_pvt_test.cc"
 #include "unit-tests/signal-processing-blocks/telemetry_decoder/galileo_fnav_inav_decoder_test.cc"
+#include "unit-tests/system-parameters/galileo_e6b_reed_solomon_test.cc"
 #include "unit-tests/system-parameters/glonass_gnav_crc_test.cc"
 #include "unit-tests/system-parameters/glonass_gnav_ephemeris_test.cc"
 #include "unit-tests/system-parameters/glonass_gnav_nav_message_test.cc"
@@ -139,7 +137,7 @@ DECLARE_string(log_dir);
 // #include "unit-tests/signal-processing-blocks/acquisition/beidou_b3i_pcps_acquisition_test.cc"
 #include "unit-tests/signal-processing-blocks/acquisition/glonass_l1_ca_pcps_acquisition_test.cc"
 #include "unit-tests/signal-processing-blocks/acquisition/gps_l2_m_pcps_acquisition_test.cc"
-#include "unit-tests/signal-processing-blocks/pvt/rtklib_solver_test.cc"
+// #include "unit-tests/signal-processing-blocks/pvt/rtklib_solver_test.cc"
 #include "unit-tests/signal-processing-blocks/tracking/gps_l1_ca_dll_pll_tracking_test.cc"
 #include "unit-tests/signal-processing-blocks/tracking/gps_l1_ca_kf_tracking_test.cc"
 #include "unit-tests/signal-processing-blocks/tracking/gps_l2_m_dll_pll_tracking_test.cc"

@@ -5,13 +5,10 @@
  * \author Javier Arribas, 2011. jarribas(at)cttc.es
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -50,7 +47,7 @@ gps_l1_ca_telemetry_decoder_gs_sptr gps_l1_ca_make_telemetry_decoder_gs(
     const Tlm_Conf &conf);
 
 /*!
- * \brief This class implements a block that decodes the NAV data defined in IS-GPS-200K
+ * \brief This class implements a block that decodes the NAV data defined in IS-GPS-200L
  */
 class gps_l1_ca_telemetry_decoder_gs : public gr::block
 {

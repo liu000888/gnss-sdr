@@ -9,13 +9,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -140,7 +137,7 @@ private:
     /*
      * Blocking function that reads the GPS assistance queue
      */
-    void gps_acq_assist_data_collector();
+    void gps_acq_assist_data_collector() const;
 
     /*
      * Compute elevations for the specified time and position for all the available satellites in ephemeris and almanac queues
@@ -156,6 +153,7 @@ private:
     void telecommand_listener();
     void keyboard_listener();
     void sysv_queue_listener();
+    void print_help_at_exit() const;
 
     // default filename for assistance data
     const std::string eph_default_xml_filename_ = "./gps_ephemeris.xml";
@@ -206,6 +204,12 @@ private:
     unsigned int applied_actions_;
     int msqid_;
 
+    bool well_formatted_configuration_;
+    bool conf_file_has_section_;
+    bool conf_file_has_mandatory_globals_;
+    bool conf_has_signal_sources_;
+    bool conf_has_observables_;
+    bool conf_has_pvt_;
     bool receiver_on_standby_;
     bool stop_;
     bool restart_;

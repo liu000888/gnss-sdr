@@ -1,11 +1,8 @@
-# Copyright (C) 2012-2020  (see AUTHORS file for a list of contributors)
-#
-# GNSS-SDR is a software-defined Global Navigation Satellite Systems receiver
-#
+# GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
 # This file is part of GNSS-SDR.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
+# SPDX-FileCopyrightText: 2010-2020 C. Fernandez-Prades cfernandez(at)cttc.es
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 set(INPUT_FILTER_GR_BLOCKS_SOURCES
@@ -46,8 +43,8 @@ target_link_libraries(input_filter_gr_blocks
         Gnuradio::blocks
         Gnuradio::filter
         Volkgnsssdr::volkgnsssdr
-    PRIVATE
         algorithms_libs
+    PRIVATE
         Volk::volk
         Log4cpp::log4cpp
 )
@@ -62,13 +59,6 @@ if(GNURADIO_USES_STD_POINTERS)
         PUBLIC -DGNURADIO_USES_STD_POINTERS=1
     )
 endif()
-
-if(GNURADIO_FFT_USES_TEMPLATES)
-    target_compile_definitions(input_filter_gr_blocks
-        PUBLIC -DGNURADIO_FFT_USES_TEMPLATES=1
-    )
-endif()
-
 
 if(ENABLE_CLANG_TIDY)
     if(CLANG_TIDY_EXE)

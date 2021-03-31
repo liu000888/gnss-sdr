@@ -9,13 +9,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -66,6 +63,7 @@ public:
     double property(std::string property_name, double default_value) const override;
     void set_property(std::string property_name, std::string value) override;
     bool is_present(const std::string& property_name) const;
+    bool has_section() const;
 
 private:
     void init();

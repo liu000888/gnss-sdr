@@ -8,13 +8,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -24,6 +21,7 @@
 #include "galileo_ephemeris.h"
 #include "glonass_gnav_ephemeris.h"
 #include "glonass_gnav_utc_model.h"
+#include "gnss_sdr_filesystem.h"
 #include "gnss_sdr_make_unique.h"
 #include "gnss_synchro.h"
 #include "gps_cnav_ephemeris.h"
@@ -39,27 +37,6 @@
 #include <termios.h>  // for tcgetattr
 #include <unistd.h>   // for close, write
 
-// clang-format off
-#if HAS_STD_FILESYSTEM
-#include <system_error>
-namespace errorlib = std;
-#if HAS_STD_FILESYSTEM_EXPERIMENTAL
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
-#include <filesystem>
-namespace fs = std::filesystem;
-#endif
-#else
-#include <boost/filesystem/operations.hpp>   // for create_directories, exists
-#include <boost/filesystem/path.hpp>         // for path, operator<<
-#include <boost/filesystem/path_traits.hpp>  // for filesystem
-#include <boost/system/error_code.hpp>       // for error_code
-namespace fs = boost::filesystem;
-namespace errorlib = boost::system;
-#endif
-// clang-format off
-
 
 Rtcm_Printer::Rtcm_Printer(const std::string& filename, bool flag_rtcm_file_dump, bool flag_rtcm_server, bool flag_rtcm_tty_port, uint16_t rtcm_tcp_port, uint16_t rtcm_station_id, const std::string& rtcm_dump_devname, bool time_tag_name, const std::string& base_path)
 {
@@ -74,7 +51,7 @@ Rtcm_Printer::Rtcm_Printer(const std::string& filename, bool flag_rtcm_file_dump
             if (!fs::exists(p))
                 {
                     std::string new_folder;
-                    for (auto& folder : fs::path(rtcm_base_path))
+                    for (const auto& folder : fs::path(rtcm_base_path))
                         {
                             new_folder += folder.string();
                             errorlib::error_code ec;
@@ -1654,7 +1631,7 @@ int Rtcm_Printer::init_serial(const std::string& serial_device)
 }
 
 
-void Rtcm_Printer::close_serial()
+void Rtcm_Printer::close_serial() const
 {
     if (rtcm_dev_descriptor != -1)
         {

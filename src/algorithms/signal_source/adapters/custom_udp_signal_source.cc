@@ -5,13 +5,10 @@
  * \author Javier Arribas jarribas (at) cttc.es
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -20,13 +17,17 @@
 
 #include "custom_udp_signal_source.h"
 #include "configuration_interface.h"
+#include "gnss_sdr_string_literals.h"
 #include <glog/logging.h>
 #include <iostream>
 
 
+using namespace std::string_literals;
+
 CustomUDPSignalSource::CustomUDPSignalSource(const ConfigurationInterface* configuration,
     const std::string& role, unsigned int in_stream, unsigned int out_stream,
-    Concurrent_Queue<pmt::pmt_t>* queue __attribute__((unused))) : role_(role), in_stream_(in_stream), out_stream_(out_stream)
+    Concurrent_Queue<pmt::pmt_t>* queue __attribute__((unused)))
+    : SignalSourceBase(configuration, role, "Custom_UDP_Signal_Source"s), in_stream_(in_stream), out_stream_(out_stream)
 {
     // DUMP PARAMETERS
     const std::string default_dump_file("./data/signal_source.dat");

@@ -10,13 +10,10 @@
  *
  * -----------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
- *
- * GNSS-SDR is a software defined Global Navigation
- *          Satellite Systems receiver
- *
+ * GNSS-SDR is a Global Navigation Satellite System software-defined receiver.
  * This file is part of GNSS-SDR.
  *
+ * Copyright (C) 2010-2020  (see AUTHORS file for a list of contributors)
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * -----------------------------------------------------------------------------
@@ -72,7 +69,7 @@ Fpga_dynamic_bit_selection::~Fpga_dynamic_bit_selection()
 }
 
 
-void Fpga_dynamic_bit_selection::bit_selection(void)
+void Fpga_dynamic_bit_selection::bit_selection()
 {
     // estimated signal power corresponding to frequency band 1
     uint32_t rx_signal_power1 = d_map_base1[1];

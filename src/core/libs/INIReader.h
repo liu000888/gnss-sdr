@@ -49,7 +49,7 @@ public:
     explicit INIReader(const std::string& filename);
 
     //! Return the result of ini_parse(), i.e., 0 on success, line number of first error on parse error, or -1 on file open error.
-    int ParseError();
+    int ParseError() const;
 
     //! Get a string value from INI file, returning default_value if not found.
     std::string Get(const std::string& section, const std::string& name,
@@ -57,6 +57,12 @@ public:
 
     //! Get an integer (long) value from INI file, returning default_value if not found.
     int64_t GetInteger(const std::string& section, const std::string& name, int64_t default_value);
+
+    //! Return true if the given section exists (section must contain at least one name=value pair).
+    bool HasSection(const std::string& section) const;
+
+    //! Return true if a value exists with the given section and field names.
+    bool HasValue(const std::string& section, const std::string& name) const;
 
 private:
     static std::string MakeKey(const std::string& section, const std::string& name);
